@@ -1,5 +1,5 @@
 local LoadStart = tick()
-ssdoors.SavePath = "Doors/Game"
+ssdoors.SavePath = "Doors/Main"
 
 local Library = ssdoors.Interface.Library
 local SaveManager = ssdoors.Interface.SaveManager
@@ -7,10 +7,6 @@ local ThemeManager = ssdoors.Interface.ThemeManager
 
 local Toggles = Library.Toggles
 local Options = Library.Options
-local SSDoorsBlue = Color3.fromRGB(0, 170, 255)
-
--- SSDoors theme overrides.
-Library.AccentColor = SSDoorsBlue
 
 local function CloneReference(Object)
 	if ssdoors and ssdoors.Environment.cloneref then
@@ -282,8 +278,6 @@ if not Library.Scheme then
 	})
 end
 
-Library.Scheme.AccentColor = SSDoorsBlue
-
 function NotificationLibrary:Notify(TitleText, Desc, Delay)
 	task.spawn(function()
 		local Notification = Instance.new("Frame")
@@ -334,7 +328,6 @@ function NotificationLibrary:Notify(TitleText, Desc, Delay)
 		Title.Size = UDim2.new(0, 205, 0, 15)
 		Title.Text = TitleText or "..."
 		Title.TextColor3 = Library.Scheme.FontColor
-        Title.Font = Enum.Font.GothamBold
 		Title.TextSize = 10
 		Title.TextStrokeTransparency = 0.75
 		Title.TextXAlignment = Enum.TextXAlignment.Left
@@ -347,7 +340,6 @@ function NotificationLibrary:Notify(TitleText, Desc, Delay)
 		Description.Size = UDim2.new(0, 205, 0, 18)
 		Description.Text = Desc or "..."
 		Description.TextColor3 = Library.Scheme.FontColor
-        Description.Font = Enum.Font.GothamBold
 		Description.TextTransparency = 0.1
 		Description.TextSize = 10
 		Description.TextStrokeTransparency = 0.75
@@ -409,77 +401,131 @@ function NotificationLibrary:Notify(TitleText, Desc, Delay)
 	end)
 end
 
-
 Globals.DoorsNotify = function(NotifyOptions)
-    local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
-    local UIContainer = PlayerGui:FindFirstChild("GlobalUI") or PlayerGui:FindFirstChild("MainUI")
-    if not UIContainer then return end
+	local function PlaySound(Parent, SoundId, Volume)
+		local Sound = Instance.new("Sound")
+		Sound.SoundId = SoundId
+		Sound.Volume = Volume or 1
+		Sound.Parent = Parent
+		task.spawn(function()
+			task.wait(0.1)
+			Sound:Play()
+			Sound.Ended:Wait()
+			Sound:Destroy()
+		end)
+	end
 
-    local AchievementsHolder = UIContainer:FindFirstChild("AchievementsHolder")
-    if not AchievementsHolder or not AchievementsHolder:FindFirstChild("Achievement") then return end
+	local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+	local UIContainer = PlayerGui:FindFirstChild("GlobalUI") or PlayerGui:FindFirstChild("MainUI")
+	if not UIContainer then return end
 
-    local Achievement = AchievementsHolder.Achievement:Clone()
-    Achievement.Size = UDim2.new(0, 0, 0, 0)
-    Achievement.Frame.Position = UDim2.new(1.1, 0, 0, 0)
-    Achievement.Name = "SSDoorsNotification"
-    Achievement.Visible = true
+	local AchievementsHolder = UIContainer:FindFirstChild("AchievementsHolder")
+	if not AchievementsHolder then return end
 
-    Achievement.Frame.TextLabel.Text = NotifyOptions.Style or "SSDoors"
-    Achievement.Frame.Details.Title.Text = NotifyOptions.Title or "SSDoors"
-    Achievement.Frame.Details.Desc.Text = NotifyOptions.Description or ""
-    Achievement.Frame.Details.Reason.Text = NotifyOptions.Reason or ""
-    Achievement.Frame.ImageLabel.Image = (NotifyOptions.Image ~= "" and NotifyOptions.Image) or "rbxassetid://6023426923"
+	local Achievement = AchievementsHolder.Achievement:Clone()
+	Achievement.Size = UDim2.new(0, 0, 0, 0)
+	Achievement.Frame.Position = UDim2.new(1.1, 0, 0, 0)
+	Achievement.Name = "LiveAchievement"
+	Achievement.Visible = true
 
-    local Color = NotifyOptions.Color or SSDoorsBlue
-    Achievement.Frame.TextLabel.TextColor3 = Color
-    Achievement.Frame.UIStroke.Color = Color
-    Achievement.Frame.Glow.ImageColor3 = Color
+	Achievement.Frame.TextLabel.Text = NotifyOptions.Style or "NOTIFICATION"
+	Achievement.Frame.Details.Title.Text = NotifyOptions.Title or "Sem Título"
+	Achievement.Frame.Details.Desc.Text = NotifyOptions.Description or "Sem Descrição"
+	Achievement.Frame.Details.Reason.Text = NotifyOptions.Reason or ""
+	Achievement.Frame.ImageLabel.Image = (NotifyOptions.Image ~= "" and NotifyOptions.Image) or "rbxassetid://6023426923"
 
-    for _, Object in ipairs(Achievement:GetDescendants()) do
-        if Object:IsA("TextLabel") then
-            Object.Font = Enum.Font.GothamBold
-        end
-    end
+	local Color = NotifyOptions.Color or Color3.new(1, 1, 1)
+	Achievement.Frame.TextLabel.TextColor3 = Color
+	Achievement.Frame.UIStroke.Color = Color
+	Achievement.Frame.Glow.ImageColor3 = Color
+	Achievement.Parent = AchievementsHolder
 
-    Achievement.Parent = AchievementsHolder
+	PlaySound(AchievementsHolder, "rbxassetid://10469938989", 1)
 
-    task.spawn(function()
-        Achievement:TweenSize(UDim2.new(1, 0, 0.2, 0), "In", "Quad", 0.8, true)
-        task.wait(0.8)
-        Achievement.Frame:TweenPosition(UDim2.new(0, 0, 0, 0), "Out", "Quad", 0.5, true)
-        Services.TweenService:Create(
-            Achievement.Frame.Glow,
-            TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
-            { ImageTransparency = 1 }
-        ):Play()
+	task.spawn(function()
+		Achievement:TweenSize(UDim2.new(1, 0, 0.2, 0), "In", "Quad", 0.8, true)
+		task.wait(0.8)
+		Achievement.Frame:TweenPosition(UDim2.new(0, 0, 0, 0), "Out", "Quad", 0.5, true)
+		Services.TweenService:Create(
+			Achievement.Frame.Glow,
+			TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+			{ ImageTransparency = 1 }
+		):Play()
 
-        if typeof(NotifyOptions.Time) == "Instance" then
-            NotifyOptions.Time.Destroying:Wait()
-        else
-            task.wait(NotifyOptions.Time or 5)
-        end
+		if typeof(NotifyOptions.Time) == "Instance" then
+			NotifyOptions.Time.Destroying:Wait()
+		else
+			task.wait(NotifyOptions.Time or 5)
+		end
 
-        Achievement.Frame:TweenPosition(UDim2.new(1.1, 0, 0, 0), "In", "Quad", 0.5, true)
-        task.wait(0.5)
-        Achievement:TweenSize(UDim2.new(1, 0, -0.1, 0), "InOut", "Quad", 0.5, true)
-        task.wait(0.5)
-        Achievement:Destroy()
-    end)
+		Achievement.Frame:TweenPosition(UDim2.new(1.1, 0, 0, 0), "In", "Quad", 0.5, true)
+		task.wait(0.5)
+		Achievement:TweenSize(UDim2.new(1, 0, -0.1, 0), "InOut", "Quad", 0.5, true)
+		task.wait(0.5)
+		Achievement:Destroy()
+	end)
 end
 
+Globals.STX = loadstring(game:HttpGet("https://raw.githubusercontent.com/buildaran/ssdoors/main/Components/STX.luau"))()
 Functions.Notify = function(Settings)
-    Settings = Settings or {}
+	local HiddenContainer = GetHiddenContainer()
 
-    local HiddenContainer = GetHiddenContainer()
-    if Toggles.NotifyPlaySound and Toggles.NotifyPlaySound.Value then
-        local Sound = Instance.new("Sound", HiddenContainer)
-        Sound.SoundId = "rbxassetid://8784885431"
-        Sound.Volume = Options.NotifySoundVolume and Options.NotifySoundVolume.Value or 3
-        Sound.PlayOnRemove = true
-        Sound:Destroy()
-    end
+	if not Settings.Body then
+		Settings.Body = "..."
+	end
 
-    NotificationLibrary:Notify(Settings.Title or "SSDoors", Settings.Body or "...", Settings.Time or 5)
+	if not Options.NotifyStyle or Options.NotifyStyle.Value == "ssdoors" then
+		local Sound = Instance.new("Sound", HiddenContainer)
+		Sound.SoundId = "rbxassetid://8784885431"
+		Sound.Volume = (Toggles.NotifyPlaySound and Toggles.NotifyPlaySound.Value and Options.NotifySoundVolume.Value) or (Toggles.NotifyPlaySound and 0 or 3)
+		Sound.PlayOnRemove = true
+		Sound:Destroy()
+		NotificationLibrary:Notify(Settings.Title, Settings.Body, Settings.Time or 5)
+	elseif Options.NotifyStyle.Value == "Doors" then
+		local IsEntity = false
+		local EntityName = ""
+		for Index, Object in pairs(Entities) do
+			if Object.NotifyMessage.Title == Settings.Title or Object.NotifyMessage.Body == Settings.Body then
+				IsEntity = true
+				EntityName = Index
+			end
+		end
+		Globals.DoorsNotify({
+			Title = "SSDoors",
+			Description = Settings.Title,
+			Reason = Settings.Body,
+			Style = IsEntity and "WARNING" or "NOTIFICATION",
+			Color = IsEntity and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(255, 222, 189),
+			Image = Settings.Image,
+			Time = Settings.Time
+		})
+	elseif Options.NotifyStyle.Value == "STX" then
+		local Sound = Instance.new("Sound", HiddenContainer)
+		Sound.SoundId = "rbxassetid://4590657391"
+		Sound.Volume = (Toggles.NotifyPlaySound and Toggles.NotifyPlaySound.Value and Options.NotifySoundVolume.Value) or (Toggles.NotifyPlaySound and 0 or 3)
+		Sound.PlayOnRemove = true
+		Sound:Destroy()
+
+		if Settings.Image then
+			Globals.STX:Notify(
+				{Title = "SSDoors", Description = Settings.Title .. "\n" .. Settings.Body},
+				{OutlineColor = Library.Scheme.AccentColor,Time = Settings.Time or 5, Type = "image"},
+				{Image = Settings.Image, ImageColor = Color3.fromRGB(255, 255, 255)}
+			)
+		else
+			Globals.STX:Notify(
+				{Title = "SSDoors", Description = Settings.Title .. "\n" .. Settings.Body},
+				{OutlineColor = Library.Scheme.AccentColor,Time = Settings.Time or 5, Type = "default"}
+			)
+		end
+	else
+		local Sound = Instance.new("Sound", HiddenContainer)
+		Sound.SoundId = "rbxassetid://4590662766"
+		Sound.Volume = (Toggles.NotifyPlaySound and Toggles.NotifyPlaySound.Value and Options.NotifySoundVolume.Value) or (Toggles.NotifyPlaySound and 0 or 3)
+		Sound.PlayOnRemove = true
+		Sound:Destroy()
+		Library:OldNotify({ Title = Settings.Title, Description = Settings.Body, Time = Settings.Time })
+	end
 end
 
 Functions.Caption = function(Text, PlaySound)
@@ -967,7 +1013,7 @@ end
 
 local Window = Library:CreateWindow({
 	Title = "SSDoors",
-	Footer = "SSDoors • Doors",
+	Footer = "SSDoors • Blue Edition",
 	NotifySide = "Right",
 	ShowCustomCursor = false,
 	AutoShow = true,
@@ -975,68 +1021,62 @@ local Window = Library:CreateWindow({
 	TabPadding = 3,
 	MenuFadeTime = 0,
 	CornerRadius = 2,
+	ToggleKeybind = "RightShift",
 })
+
 
 local Tabs = {
-	General  = Window:AddTab("General", "house"),
-	Exploits = Window:AddTab("Exploits", "shield"),
-	Visuals  = Window:AddTab("Visuals", "eye"),
-	Floors   = Window:AddTab("Floors", "earth"),
+	General  = Window:AddTab("Main", "house"),
+	Exploits = Window:AddTab("Protection", "shield"),
+	Visuals  = Window:AddTab("ESP", "eye"),
+	Floors   = Window:AddTab("Floor Tools", "earth"),
 }
 
--- SSDoors menu controls. The keybind stays available even when the window is hidden.
-local UIControls = Tabs.General:AddRightGroupbox("Interface")
-UIControls:AddLabel("SSDoors stays active while the menu is hidden. Use the menu key again to bring it back.", true)
-UIControls:AddLabel("Menu Toggle"):AddKeyPicker("SSDoorsMenuKeybind", {
-	Default = "RightShift",
-	Mode = "Toggle",
-	NoUI = true,
-	Text = "Show / hide SSDoors"
-})
-Library.ToggleKeybind = Options.SSDoorsMenuKeybind
-UIControls:AddDivider()
-UIControls:AddButton({
+local SSDoorsMenu = Tabs.General:AddRightGroupbox("SSDoors Menu")
+SSDoorsMenu:AddButton({
 	Text = "Hide SSDoors Menu",
-	Tooltip = "Hides the menu without stopping SSDoors features.",
+	Tooltip = "Hides the SSDoors window. Press RightShift to bring it back.",
 	Func = function()
-		Window:Toggle(false)
-	end
+		pcall(function() Window:Toggle(false) end)
+	end,
 })
-UIControls:AddButton({
+SSDoorsMenu:AddButton({
 	Text = "Unload SSDoors",
 	DoubleClick = true,
-	Tooltip = "Restores changed game state, removes SSDoors visuals, and shuts the script down.",
+	Tooltip = "Restores SSDoors changes, removes its visuals, and unloads the UI.",
 	Func = function()
 		Library:Unload()
-	end
+	end,
 })
+SSDoorsMenu:AddLabel("Menu hotkey: RightShift")
 
-Groupboxes.General_Character = Tabs.General:AddLeftGroupbox("Movement")
+
+Groupboxes.General_Character = Tabs.General:AddLeftGroupbox("Character")
 Groupboxes.General_Character:AddSlider("SpeedBoostSlider", {
-	Text = "Walk Speed Boost", Min = 0, Max = 100, Default = 0, Rounding = 0, Compact = true
+	Text = "Movement Boost", Min = 0, Max = 100, Default = 0, Rounding = 0, Compact = true
 })
 Groupboxes.General_Character:AddToggle("SpeedBoostToggle", {
-	Text = "Enable Walk Speed", Default = false, Tooltip = "Adds the selected amount to your current walk speed."
+	Text = "Enable Movement Boost", Default = false, Tooltip = "Increases your walkspeed by the specified amount."
 })
 Groupboxes.General_Character:AddToggle("FlyToggle", {
-	Text = "Free Flight", Default = false, Tooltip = "Lets your character move freely through the map."
+	Text = "Fly", Default = false, Tooltip = "Allows you to freely fly around the map."
 })
 Toggles.FlyToggle:AddKeyPicker("FlyKeybind", {
-	Text = "Toggle Flight", Default = "F", Mode = "Toggle", SyncToggleState = true
+	Text = "Fly", Default = "F", Mode = "Toggle", SyncToggleState = true
 })
 Groupboxes.General_Character:AddSlider("FlySpeed", {
-	Text = "Flight Speed", Min = 0, Max = 115, Default = 20, Rounding = 0, Compact = true
+	Text = "Fly Speed", Min = 0, Max = 115, Default = 20, Rounding = 0, Compact = true
 })
 Groupboxes.General_Character:AddDivider()
 Groupboxes.General_Character:AddToggle("NoclipToggle", {
-	Text = "Wall Phase", Default = false, Tooltip = "Lets your character pass through solid geometry."
+	Text = "Noclip", Default = false, Tooltip = "Allows your character to pass through solid objects."
 })
 Groupboxes.General_Character:AddToggle("RemoveClosetDelay", {
-	Text = "Fast Closet Exit", Default = false,
-	Tooltip = "Shortens the delay before you can leave a hiding spot."
+	Text = "Skip Closet Delay", Default = false,
+	Tooltip = "Removes the short window where you can't exit out of a closet after the animation finishes."
 })
 Groupboxes.General_Character:AddToggle("RemoveAcceleration", {
-	Text = "Reduce Movement Drift", Default = false, Tooltip = "Cuts down the extra sliding caused by movement acceleration."
+	Text = "Smooth Movement", Default = false, Tooltip = "Prevents your character from sliding while moving."
 })
 
 local CustomPhysics
@@ -1048,7 +1088,7 @@ Options.SpeedBoostSlider:OnChanged(function(Value)
 end)
 
 Toggles.NoclipToggle:AddKeyPicker("NoclipKeybind", {
-	Text = "Toggle Wall Phase", Default = "N", Mode = "Toggle", SyncToggleState = true
+	Text = "Noclip", Default = "N", Mode = "Toggle", SyncToggleState = true
 })
 Toggles.RemoveAcceleration:OnChanged(function(Value)
 	for Index, Old in PartProperties do
@@ -1058,13 +1098,13 @@ end)
 
 Groupboxes.General_Character:AddDivider()
 Groupboxes.General_Character:AddToggle("EnableCharacterJump", {
-	Text = "Allow Jumping", Default = false, Tooltip = "Restores jumping while the game normally has it restricted."
+	Text = "Enable Jumping", Default = false, Tooltip = "Allows your character to jump."
 })
 Groupboxes.General_Character:AddToggle("EnableCharacterSlide", {
-	Text = "Allow Sliding", Default = false, Tooltip = "Restores sliding while the game normally has it restricted."
+	Text = "Enable Sliding", Default = false, Tooltip = "Allows your character to slide."
 })
 Groupboxes.General_Character:AddToggle("InfiniteJumps", {
-	Text = "Air Jumps", Default = false, Tooltip = "Lets you trigger additional jumps while airborne."
+	Text = "Air Jumps", Default = false, Tooltip = "Allows you to jump while in the air."
 })
 
 local OldJump = false
@@ -1086,12 +1126,12 @@ Toggles.EnableCharacterSlide:OnChanged(function(Value)
 	end
 end)
 
-Groupboxes.General_Self = Tabs.General:AddLeftGroupbox("Player Tools")
+Groupboxes.General_Self = Tabs.General:AddLeftGroupbox("Self")
 Groupboxes.General_Self:AddToggle("DoorReachToggle", {
-	Text = "Extended Door Reach", Default = false, Tooltip = "Increases the usable distance for door interactions."
+	Text = "Door Reach", Default = false, Tooltip = "Allows you to open doors from further away."
 })
 Groupboxes.General_Self:AddToggle("DisableIdleKick", {
-	Text = "Block Idle Kick", Default = false, Tooltip = "Attempts to keep the session active while you are idle."
+	Text = "Idle Protection", Default = false, Tooltip = "Prevents the kick from being idle for 20 minutes."
 })
 Toggles.DisableIdleKick:OnChanged(function(Value)
 	if Functions.CheckCompatability({"getconnections"}) then
@@ -1109,13 +1149,13 @@ end)
 
 Groupboxes.General_Self:AddDivider()
 Groupboxes.General_Self:AddSlider("PromptReachSlider", {
-	Text = "Interaction Reach Multiplier", Min = 1, Max = 2, Default = 1, Rounding = 1, Compact = true
+	Text = "Interaction Reach", Min = 1, Max = 2, Default = 1, Rounding = 1, Compact = true
 })
 Groupboxes.General_Self:AddToggle("InstantPrompts", {
-	Text = "Instant Interactions", Default = false, Tooltip = "Removes the hold time from supported interactions."
+	Text = "Instant Interactions", Default = false, Tooltip = "Allows you to trigger all prompts instantly."
 })
 Groupboxes.General_Self:AddToggle("PromptClip", {
-	Text = "Through-Wall Interactions", Default = false, Tooltip = "Allows supported prompts to be triggered without line of sight."
+	Text = "Wall Interactions", Default = false, Tooltip = "Allows you to interact with prompts through walls."
 })
 
 Options.PromptReachSlider:OnChanged(function(Value)
@@ -1136,10 +1176,10 @@ end)
 
 Groupboxes.Self_Automation = Tabs.General:AddRightGroupbox("Automation")
 Groupboxes.Self_Automation:AddToggle("AutoBreakerBox", {
-	Text = "Automatic Breaker Solver", Default = false, Tooltip = "Automatically solves the breaker box."
+	Text = "Auto-Solve Breaker", Default = false, Tooltip = "Automatically solves the breaker box."
 })
 Groupboxes.Self_Automation:AddToggle("AutoSolveAnchors", {
-	Text = "Automatic Anchor Codes", Default = false,
+	Text = "Auto-Solve Anchors", Default = false,
 	Tooltip = "Automatically enters the correct code into anchors when you are near them."
 })
 Toggles.AutoBreakerBox:OnChanged(function(Value)
@@ -1155,24 +1195,24 @@ Toggles.AutoBreakerBox:OnChanged(function(Value)
 	end
 end)
 
-Groupboxes.Self_Automation:AddToggle("AutoHeartbeatMinigame", { Text = "Auto Heartbeat", Default = false, Tooltip = "Prevents the 'Figure' minigame from ever failing.", Disabled = not Functions.CheckCompatability({"hookmetamethod", "newcclosure", "getnamecallmethod"}), DisabledTooltip = Globals.IncompatibleMessage })
+Groupboxes.Self_Automation:AddToggle("AutoHeartbeatMinigame", { Text = "Auto Heartbeat Minigame", Default = false, Tooltip = "Prevents the 'Figure' minigame from ever failing.", Disabled = not Functions.CheckCompatability({"hookmetamethod", "newcclosure", "getnamecallmethod"}), DisabledTooltip = Globals.IncompatibleMessage })
 Groupboxes.Self_Automation:AddDivider()
 Groupboxes.Self_Automation:AddToggle("AutoUnlockPadlockToggle", {
-	Text = "Auto Unlock Library", Default = false, Tooltip = "Automatically enters the code into the library padlock."
+	Text = "Auto Unlock Padlock", Default = false, Tooltip = "Automatically enters the code into the library padlock."
 })
 Groupboxes.Self_Automation:AddSlider("AutoUnlockPadlockSlider", {
 	Text = "Unlock Distance", Min = 1, Max = 50, Default = 10, Rounding = 0, Compact = true
 })
 Groupboxes.Self_Automation:AddToggle("AutoLibraryGuessCode", {
-	Text = "Guess Library Combination", Default = false,
+	Text = "Guess Library Code", Default = false,
 	Tooltip = "Attempts to guess the library code, but collecting some books is also necessary."
 })
 Groupboxes.Self_Automation:AddDivider()
 Groupboxes.Self_Automation:AddToggle("AutoInteractToggle", {
-	Text = "Smart Auto Interact", Default = false, Tooltip = "Automatically triggers nearby prompts."
+	Text = "Auto Interact", Default = false, Tooltip = "Automatically triggers nearby prompts."
 })
 Toggles.AutoInteractToggle:AddKeyPicker("AutoInteractKeybind", {
-	Text = "Smart Auto Interact", Default = "R",
+	Text = "Auto Interact", Default = "R",
 	Mode = Library.IsMobile and "Toggle" or "Hold", SyncToggleState = true
 })
 Groupboxes.Self_Automation:AddDropdown("AutoInteractIgnoreList", {
@@ -1183,11 +1223,11 @@ Groupboxes.Self_Automation:AddDropdown("AutoInteractIgnoreList", {
 })
 Groupboxes.Self_Automation:AddDivider()
 Groupboxes.Self_Automation:AddToggle("AutoClosetToggle", {
-	Text = "Smart Auto Hide", Default = false,
+	Text = "Auto Closet", Default = false,
 	Tooltip = "Automatically hides in a nearby closet when an entity is near."
 })
 Toggles.AutoClosetToggle:AddKeyPicker("AutoClosetKeybind", {
-	Text = "Smart Auto Hide", Default = "Q", Mode = "Toggle", SyncToggleState = true
+	Text = "Auto Closet", Default = "Q", Mode = "Toggle", SyncToggleState = true
 })
 Groupboxes.Self_Automation:AddDropdown("AutoClosetEntityList", {
 	Text = "Ignore List",
@@ -1195,7 +1235,7 @@ Groupboxes.Self_Automation:AddDropdown("AutoClosetEntityList", {
 	Multi = true, AllowNull = true
 })
 Groupboxes.Self_Automation:AddToggle("SpectateEntityToggle", {
-	Text = "Follow Entity",
+	Text = "Spectate Entity",
 	Default = false,
 	Tooltip = "Spectates the entity while auto hiding."
 })
@@ -1239,18 +1279,18 @@ Groupboxes.Self_Misc:AddButton({
 })
 
 Groupboxes.Exploits_Bypass = Tabs.Exploits:AddLeftGroupbox("Bypass")
-Groupboxes.Exploits_Bypass:AddToggle("BypassGiggle",         { Text = "Ignore Giggle Damage",           Default = false, Tooltip = "Prevents 'Giggle' from attacking you." })
-Groupboxes.Exploits_Bypass:AddToggle("BypassDupe",           { Text = "Ignore Dupe Doors",             Default = false, Tooltip = "Prevents you from open 'Dupe' fake doors." })
-Groupboxes.Exploits_Bypass:AddToggle("BypassEyes",           { Text = "Ignore Eyes Damage",             Default = false, Tooltip = "Prevents 'Eyes' from hurting you." })
-Groupboxes.Exploits_Bypass:AddToggle("BypassLookman",        { Text = "Ignore Lookman Damage",          Default = false, Tooltip = "Prevents 'Lookman' from hurting you." })
-Groupboxes.Exploits_Bypass:AddToggle("BypassGloombatEggs",   { Text = "Ignore Gloombat Eggs",    Default = false, Tooltip = "Prevents taking damage from stepping on 'Gloombat' eggs." })
-Groupboxes.Exploits_Bypass:AddToggle("BypassSeekObstructions", { Text = "Ignore Seek Obstacles", Default = false, Tooltip = "Prevents obstacles in the 'Seek' chase from harming you." })
-Groupboxes.Exploits_Bypass:AddToggle("BypassVacuum",         { Text = "Ignore Vacuum Doors",           Default = false, Tooltip = "Prevents you from falling into 'Vacuum' fake doors." })
-Groupboxes.Exploits_Bypass:AddToggle("BypassKillbricks",     { Text = "Ignore Kill Bricks",       Default = false, Tooltip = "Prevents 'Lava' from hurting you." })
-Groupboxes.Exploits_Bypass:AddToggle("BypassSeekingWall",    { Text = "Ignore Seeking Wall",     Default = false, Tooltip = "Prevents 'ScaryWall' from hurting you." })
-Groupboxes.Exploits_Bypass:AddToggle("BypassSnare",          { Text = "Ignore Snare",            Default = false, Tooltip = "Prevents 'Snare' from trapping you." })
-Groupboxes.Exploits_Bypass:AddToggle("BypassBanana",         { Text = "Ignore Banana Peel",           Default = false, Tooltip = "Prevents 'Banana Peel' from slipping you up (sometimes doesn't work)." })
-Groupboxes.Exploits_Bypass:AddToggle("BypassJeff",           { Text = "Ignore Jeff Damage",             Default = false, Tooltip = "Prevents 'Jeff the Killer' from stabbing you (sometimes doesn't work)." })
+Groupboxes.Exploits_Bypass:AddToggle("BypassGiggle",         { Text = "Bypass Giggle",           Default = false, Tooltip = "Prevents 'Giggle' from attacking you." })
+Groupboxes.Exploits_Bypass:AddToggle("BypassDupe",           { Text = "Bypass Dupe",             Default = false, Tooltip = "Prevents you from open 'Dupe' fake doors." })
+Groupboxes.Exploits_Bypass:AddToggle("BypassEyes",           { Text = "Bypass Eyes",             Default = false, Tooltip = "Prevents 'Eyes' from hurting you." })
+Groupboxes.Exploits_Bypass:AddToggle("BypassLookman",        { Text = "Bypass Lookman",          Default = false, Tooltip = "Prevents 'Lookman' from hurting you." })
+Groupboxes.Exploits_Bypass:AddToggle("BypassGloombatEggs",   { Text = "Bypass Gloombat Eggs",    Default = false, Tooltip = "Prevents taking damage from stepping on 'Gloombat' eggs." })
+Groupboxes.Exploits_Bypass:AddToggle("BypassSeekObstructions", { Text = "Bypass Seek Obstructions", Default = false, Tooltip = "Prevents obstacles in the 'Seek' chase from harming you." })
+Groupboxes.Exploits_Bypass:AddToggle("BypassVacuum",         { Text = "Bypass Vacuum",           Default = false, Tooltip = "Prevents you from falling into 'Vacuum' fake doors." })
+Groupboxes.Exploits_Bypass:AddToggle("BypassKillbricks",     { Text = "Bypass Killbricks",       Default = false, Tooltip = "Prevents 'Lava' from hurting you." })
+Groupboxes.Exploits_Bypass:AddToggle("BypassSeekingWall",    { Text = "Bypass Seeking Wall",     Default = false, Tooltip = "Prevents 'ScaryWall' from hurting you." })
+Groupboxes.Exploits_Bypass:AddToggle("BypassSnare",          { Text = "Bypass Snare",            Default = false, Tooltip = "Prevents 'Snare' from trapping you." })
+Groupboxes.Exploits_Bypass:AddToggle("BypassBanana",         { Text = "Bypass Banana",           Default = false, Tooltip = "Prevents 'Banana Peel' from slipping you up (sometimes doesn't work)." })
+Groupboxes.Exploits_Bypass:AddToggle("BypassJeff",           { Text = "Bypass Jeff",             Default = false, Tooltip = "Prevents 'Jeff the Killer' from stabbing you (sometimes doesn't work)." })
 
 Toggles.BypassGiggle:OnChanged(function(Value)
 	for _, Object in Objects.Entities do
@@ -1430,16 +1470,16 @@ Toggles.CrouchSpoof:OnChanged(function(Value)
 end)
 
 Groupboxes.Exploits_Remove = Tabs.Exploits:AddRightGroupbox("Remove")
-Groupboxes.Exploits_Remove:AddToggle("RemoveScreech", { Text = "Suppress Screech",  Default = false, Tooltip = "Prevents 'Screech' from spawning." })
-Groupboxes.Exploits_Remove:AddToggle("RemoveHalt",    { Text = "Suppress Halt",     Default = false, Tooltip = "Prevents 'Halt' from spawning." })
+Groupboxes.Exploits_Remove:AddToggle("RemoveScreech", { Text = "Remove Screech",  Default = false, Tooltip = "Prevents 'Screech' from spawning." })
+Groupboxes.Exploits_Remove:AddToggle("RemoveHalt",    { Text = "Remove Halt",     Default = false, Tooltip = "Prevents 'Halt' from spawning." })
 Groupboxes.Exploits_Remove:AddToggle("RemoveA90",     { Text = "Remove A-90",     Default = false, Tooltip = "Prevents 'A-90' from spawning." })
-Groupboxes.Exploits_Remove:AddToggle("RemoveDread",   { Text = "Suppress Dread",    Default = false, Tooltip = "Prevents 'Dread' from spawning." })
-Groupboxes.Exploits_Remove:AddToggle("RemoveSurge", { Text = "Suppress Surge", Default = false, Tooltip = "Prevents 'Surge' from spawning."})
+Groupboxes.Exploits_Remove:AddToggle("RemoveDread",   { Text = "Remove Dread",    Default = false, Tooltip = "Prevents 'Dread' from spawning." })
+Groupboxes.Exploits_Remove:AddToggle("RemoveSurge", { Text = "Remove Surge", Default = false, Tooltip = "Prevents 'Surge' from spawning."})
 Groupboxes.Exploits_Remove:AddDivider()
-Groupboxes.Exploits_Remove:AddToggle("NoScreechDamage", { Text = "Block Screech Damage", Default = false, Tooltip = "Prevents 'Screech' from hurting you." })
-Groupboxes.Exploits_Remove:AddToggle("NoHaltDamage",    { Text = "Block Halt Damage",    Default = false, Tooltip = "Prevents 'Halt' from hurting you." })
-Groupboxes.Exploits_Remove:AddToggle("NoA90Damage",     { Text = "Block A-90 Damage",    Default = false, Tooltip = "Prevents 'A-90' from hurting you." })
-Groupboxes.Exploits_Remove:AddToggle("NoSurgeDamage",   { Text = "Block Surge Damage",   Default = false, Tooltip = "Prevents 'Surge' from hurting you." })
+Groupboxes.Exploits_Remove:AddToggle("NoScreechDamage", { Text = "No Screech Damage", Default = false, Tooltip = "Prevents 'Screech' from hurting you." })
+Groupboxes.Exploits_Remove:AddToggle("NoHaltDamage",    { Text = "No Halt Damage",    Default = false, Tooltip = "Prevents 'Halt' from hurting you." })
+Groupboxes.Exploits_Remove:AddToggle("NoA90Damage",     { Text = "No A-90 Damage",    Default = false, Tooltip = "Prevents 'A-90' from hurting you." })
+Groupboxes.Exploits_Remove:AddToggle("NoSurgeDamage",   { Text = "No Surge Damage",   Default = false, Tooltip = "Prevents 'Surge' from hurting you." })
 
 Toggles.NoScreechDamage:OnChanged(function(Value)
 	if Value then
@@ -1562,7 +1602,11 @@ Groupboxes.Visuals_Camera:AddSlider("ViewmodelOffsetX", { Text = "X Offset", Min
 Groupboxes.Visuals_Camera:AddSlider("ViewmodelOffsetY", { Text = "Y Offset", Min = -10, Max = 10, Default = 0, Rounding = 1, Compact = true, Disabled = not Functions.CheckCompatability({"require"}), DisabledTooltip = Globals.IncompatibleMessage })
 Groupboxes.Visuals_Camera:AddSlider("ViewmodelOffsetZ", { Text = "Z Offset", Min = -10, Max = 10, Default = 0, Rounding = 1, Compact = true, Disabled = not Functions.CheckCompatability({"require"}), DisabledTooltip = Globals.IncompatibleMessage })
 
-Toggles.AmbientToggle:AddColorPicker("AmbientColor", { Text = "Ambient", Default = Color3.fromRGB(255, 255, 255), Transparency = 0 })
+Toggles.AmbientToggle:AddColorPicker("AmbientColor", {
+	Text = "Ambient",
+	Default = SSDoorsBlue,
+	Transparency = 0,
+})
 Toggles.AmbientToggle:OnChanged(function(Value)
 	local OldAmbient = CurrentRooms:FindFirstChild(tostring(LocalPlayer:GetAttribute("CurrentRoom"))):GetAttribute("Ambient")
 	Services.TweenService:Create(Services.Lighting, TweenInfo.new(0.2, Enum.EasingStyle.Exponential), {
@@ -1684,7 +1728,7 @@ Groupboxes.Visuals_Entities:AddDropdown("EntityList", {
 	Values = { "Rush","Ambush","Eyes","Halt","Blitz","Lookman","Gloombat Swarm","A-60","A-120","Sally","Jeff the Killer","Groundskeeper","Monument","AR0xMBUSH","RNIUSHCG==" },
 	Multi = true, AllowNull = true
 })
-Groupboxes.Visuals_Entities:AddToggle("NotifyEntities",    { Text = "Entity Alerts",    Default = false, Tooltip = "Shows a compact SSDoors alert when a selected entity appears." })
+Groupboxes.Visuals_Entities:AddToggle("NotifyEntities",    { Text = "Notify Entities",    Default = false, Tooltip = "Sends a notification when an entity spawns." })
 Groupboxes.Visuals_Entities:AddDivider()
 
 local ItemsToNotify = {}
@@ -1699,12 +1743,12 @@ Groupboxes.Visuals_Entities:AddDropdown("NotifyItemList", {
 	Values = ItemsToNotify,
 	Multi = true, AllowNull = true
 })
-Groupboxes.Visuals_Entities:AddToggle("NotifyItemsToggle",    { Text = "Item Alerts",    Default = false, Tooltip = "Shows a compact SSDoors alert when a selected item appears." })
+Groupboxes.Visuals_Entities:AddToggle("NotifyItemsToggle",    { Text = "Notify Items",    Default = false, Tooltip = "Sends a notification when an item spawns." })
 Groupboxes.Visuals_Entities:AddToggle("NotifyItemsShowDistance",    { Text = "Show Distance",    Default = false, Tooltip = "Shows how far away the item is in the notification." })
 Groupboxes.Visuals_Entities:AddDivider()
-Groupboxes.Visuals_Entities:AddToggle("NotifyLibraryCode", { Text = "Library Code Alert", Default = false, Tooltip = "Automatically solves the code for the library padlock." })
-Groupboxes.Visuals_Entities:AddToggle("NotifyOxygen",      { Text = "Oxygen Alerts", Default = false, Tooltip = "Shows how much oxygen you have remaining." })
-Groupboxes.Visuals_Entities:AddToggle("NotifyHasteTime",   { Text = "Haste Timer Alerts",   Default = false, Tooltip = "Shows how much time you have remaining before 'Haste' spawns." })
+Groupboxes.Visuals_Entities:AddToggle("NotifyLibraryCode", { Text = "Notify Library Code", Default = false, Tooltip = "Automatically solves the code for the library padlock." })
+Groupboxes.Visuals_Entities:AddToggle("NotifyOxygen",      { Text = "Notify Oxygen Level", Default = false, Tooltip = "Shows how much oxygen you have remaining." })
+Groupboxes.Visuals_Entities:AddToggle("NotifyHasteTime",   { Text = "Notify Haste Time",   Default = false, Tooltip = "Shows how much time you have remaining before 'Haste' spawns." })
 
 Globals.LibraryCodeFound = false
 Toggles.NotifyLibraryCode:OnChanged(function(Value)
@@ -1718,13 +1762,14 @@ Toggles.NotifyLibraryCode:OnChanged(function(Value)
 	end
 end)
 
-Groupboxes.Visuals_EntitySettings:AddToggle("EntityChatToggle", { Text = "Send Entity Alerts to Chat", Default = false, Tooltip = "Sends a message in the chat when an entity spawns." })
-Groupboxes.Visuals_EntitySettings:AddInput("EntityChatMessage", { Text = "Chat Suffix", Default = "has appeared!", Numeric = false, Placeholder = "Message" })
+Groupboxes.Visuals_EntitySettings:AddToggle("EntityChatToggle", { Text = "Notify Chat", Default = false, Tooltip = "Sends a message in the chat when an entity spawns." })
+Groupboxes.Visuals_EntitySettings:AddInput("EntityChatMessage", { Text = "Message", Default = "spawned!", Numeric = false, Placeholder = "Message" })
 Groupboxes.Visuals_EntitySettings:AddDivider()
-Groupboxes.Visuals_EntitySettings:AddSlider("NotifySoundVolume", { Text = "Alert Volume", Min = 0, Max = 10, Default = 3, Rounding = 1 })
-Groupboxes.Visuals_EntitySettings:AddToggle("NotifyPlaySound", { Text = "Play Alert Sound", Default = true, Tooltip = "Makes notifications play an alert sound." })
-Groupboxes.Visuals_EntitySettings:AddToggle("NotifyKeepNotifications", { Text = "Persist Entity Alerts", Default = false, Tooltip = "Certain notifications will stay on screen until they are no longer needed." })
-Groupboxes.Visuals_EntitySettings:AddButton({ Text = "Preview SSDoors Alert", DoubleClick = false, Tooltip = "Sends a test notifcation, so you can see how your settings look.", Func = function()
+Groupboxes.Visuals_EntitySettings:AddDropdown("NotifyStyle", { Text = "Notify Style", Values = { "ssdoors", "Doors", "STX", "Library" }, Default = 1 })
+Groupboxes.Visuals_EntitySettings:AddSlider("NotifySoundVolume", { Text = "Sound Volume", Min = 0, Max = 10, Default = 3, Rounding = 1 })
+Groupboxes.Visuals_EntitySettings:AddToggle("NotifyPlaySound", { Text = "Play Sound", Default = true, Tooltip = "Makes notifications play an alert sound." })
+Groupboxes.Visuals_EntitySettings:AddToggle("NotifyKeepNotifications", { Text = "Keep Notifications", Default = false, Tooltip = "Certain notifications will stay on screen until they are no longer needed." })
+Groupboxes.Visuals_EntitySettings:AddButton({ Text = "Test Notification", DoubleClick = false, Tooltip = "Sends a test notifcation, so you can see how your settings look.", Func = function()
 	Functions.Notify({Title = "This is a test."})
 end})
 
@@ -1734,7 +1779,11 @@ Groupboxes.Visuals_ESP_Settings = Groupboxes.Visuals_ESP:AddTab("Settings")
 
 local function MakeESPToggle(ToggleKey, ColorKey, Text, Tooltip, ObjectsTable, LabelFunc, RoomBased)
 	Groupboxes.Visuals_ESP_Toggles:AddToggle(ToggleKey, { Text = Text, Default = false, Tooltip = Tooltip })
-	Toggles[ToggleKey]:AddColorPicker(ColorKey, { Text = Text, Default = Options[ColorKey] and Options[ColorKey].Value or SSDoorsBlue, Transparency = 0 })
+	Toggles[ToggleKey]:AddColorPicker(ColorKey, {
+		Text = Text,
+		Default = SSDoorsBlue,
+		Transparency = 0,
+	})
 	Toggles[ToggleKey]:OnChanged(function(Value)
 		for _, Object in ObjectsTable do
 			if Value then
@@ -1755,7 +1804,11 @@ local function MakeESPToggle(ToggleKey, ColorKey, Text, Tooltip, ObjectsTable, L
 end
 
 Groupboxes.Visuals_ESP_Toggles:AddToggle("ObjectiveESPToggle", { Text = "Objectives", Default = false, Tooltip = "Highlights all objects required to progress." })
-Toggles.ObjectiveESPToggle:AddColorPicker("ObjectiveESPColor", { Text = "Objectives", Default = SSDoorsBlue, Transparency = 0 })
+Toggles.ObjectiveESPToggle:AddColorPicker("ObjectiveESPColor", {
+	Text = "Objectives",
+	Default = SSDoorsBlue,
+	Transparency = 0,
+})
 
 local ObjectiveLabels = {
 	["KeyObtain"]              = "Door Key",
@@ -1799,13 +1852,13 @@ Options.ObjectiveESPColor:OnChanged(function(Value)
 	end
 end)
 
-Groupboxes.Visuals_ESP_Toggles:AddToggle("DoorESPToggle",       { Text = "Next Door",        Default = false, Tooltip = "Highlights the next door in your route." })
-Groupboxes.Visuals_ESP_Toggles:AddToggle("HidingSpotESPToggle", { Text = "Hide Spots", Default = false, Tooltip = "Highlights nearby places that can protect you from entities." })
-Groupboxes.Visuals_ESP_Toggles:AddToggle("PlayerESPToggle",     { Text = "Other Players",      Default = false, Tooltip = "Highlights other players in the current run." })
-Groupboxes.Visuals_ESP_Toggles:AddToggle("ChestESPToggle",      { Text = "Loot Chests",       Default = false, Tooltip = "Highlights containers that can hold useful items." })
-Groupboxes.Visuals_ESP_Toggles:AddToggle("ItemESPToggle",       { Text = "Collectables",        Default = false, Tooltip = "Highlights useful items and consumables." })
-Groupboxes.Visuals_ESP_Toggles:AddToggle("CurrencyESPToggle",   { Text = "Currency Drops",     Default = false, Tooltip = "Highlights currency that appears in the run." })
-Groupboxes.Visuals_ESP_Toggles:AddToggle("LadderESPToggle",     { Text = "Ladders",      Default = false, Tooltip = "Highlights ladders that interact with the anti-cheat system." })
+Groupboxes.Visuals_ESP_Toggles:AddToggle("DoorESPToggle",       { Text = "Doors",        Default = false, Tooltip = "Highlights the next door." })
+Groupboxes.Visuals_ESP_Toggles:AddToggle("HidingSpotESPToggle", { Text = "Hiding Spots", Default = false, Tooltip = "Highlights places where you can hide from entities" })
+Groupboxes.Visuals_ESP_Toggles:AddToggle("PlayerESPToggle",     { Text = "Players",      Default = false, Tooltip = "Highlights other players." })
+Groupboxes.Visuals_ESP_Toggles:AddToggle("ChestESPToggle",      { Text = "Chests",       Default = false, Tooltip = "Highlights objects that can contain loot." })
+Groupboxes.Visuals_ESP_Toggles:AddToggle("ItemESPToggle",       { Text = "Items",        Default = false, Tooltip = "Highlights all collectable items/consumables." })
+Groupboxes.Visuals_ESP_Toggles:AddToggle("CurrencyESPToggle",   { Text = "Currency",     Default = false, Tooltip = "Highlights all currency that spawns." })
+Groupboxes.Visuals_ESP_Toggles:AddToggle("LadderESPToggle",     { Text = "Ladders",      Default = false, Tooltip = "Highlights ladders that can be used to disable the anticheat." })
 Groupboxes.Visuals_ESP_Toggles:AddDivider()
 Groupboxes.Visuals_ESP_Toggles:AddDropdown("EntityESPOptions",     { 
 	Text = "Entity List",
@@ -1813,16 +1866,48 @@ Groupboxes.Visuals_ESP_Toggles:AddDropdown("EntityESPOptions",     {
 	Multi = true,
 	AllowNull = true
 })
-Groupboxes.Visuals_ESP_Toggles:AddToggle("EntityESPToggle",     { Text = "Entity Tracking",      Default = false, Tooltip = "Highlights selected entities as they appear." })
+Groupboxes.Visuals_ESP_Toggles:AddToggle("EntityESPToggle",     { Text = "Entities",      Default = false, Tooltip = "Highlights all entities that spawn." })
 
-Toggles.DoorESPToggle:AddColorPicker("DoorESPColor", { Text = "Doors", Default = SSDoorsBlue, Transparency = 0 })
-Toggles.HidingSpotESPToggle:AddColorPicker("HidingSpotESPColor", { Text = "Hiding Spots", Default = SSDoorsBlue, Transparency = 0 })
-Toggles.PlayerESPToggle:AddColorPicker("PlayerESPColor", { Text = "Players", Default = SSDoorsBlue, Transparency = 0 })
-Toggles.ChestESPToggle:AddColorPicker("ChestESPColor", { Text = "Chests", Default = SSDoorsBlue, Transparency = 0 })
-Toggles.ItemESPToggle:AddColorPicker("ItemESPColor", { Text = "Items", Default = SSDoorsBlue, Transparency = 0 })
-Toggles.CurrencyESPToggle:AddColorPicker("CurrencyESPColor", { Text = "Currency", Default = SSDoorsBlue, Transparency = 0 })
-Toggles.LadderESPToggle:AddColorPicker("LadderESPColor", { Text = "Ladders", Default = SSDoorsBlue, Transparency = 0 })
-Toggles.EntityESPToggle:AddColorPicker("EntityESPColor", { Text = "Entities", Default = SSDoorsBlue, Transparency = 0 })
+Toggles.DoorESPToggle:AddColorPicker("DoorESPColor", {
+	Text = "Doors",
+	Default = SSDoorsBlue,
+	Transparency = 0,
+})
+Toggles.HidingSpotESPToggle:AddColorPicker("HidingSpotESPColor", {
+	Text = "Hiding Spots",
+	Default = SSDoorsBlue,
+	Transparency = 0,
+})
+Toggles.PlayerESPToggle:AddColorPicker("PlayerESPColor", {
+	Text = "Players",
+	Default = SSDoorsBlue,
+	Transparency = 0,
+})
+Toggles.ChestESPToggle:AddColorPicker("ChestESPColor", {
+	Text = "Chests",
+	Default = SSDoorsBlue,
+	Transparency = 0,
+})
+Toggles.ItemESPToggle:AddColorPicker("ItemESPColor", {
+	Text = "Items",
+	Default = SSDoorsBlue,
+	Transparency = 0,
+})
+Toggles.CurrencyESPToggle:AddColorPicker("CurrencyESPColor", {
+	Text = "Currency",
+	Default = SSDoorsBlue,
+	Transparency = 0,
+})
+Toggles.LadderESPToggle:AddColorPicker("LadderESPColor", {
+	Text = "Ladders",
+	Default = SSDoorsBlue,
+	Transparency = 0,
+})
+Toggles.EntityESPToggle:AddColorPicker("EntityESPColor", {
+	Text = "Entities",
+	Default = SSDoorsBlue,
+	Transparency = 0,
+})
 
 local HidingSpotLabels = {
 	Wardrobe = "Closet", ["Backdoor_Wardrobe"] = "Closet", Toolshed = "Closet",
@@ -1990,6 +2075,7 @@ Options.LadderESPColor:OnChanged(function(Value)
 	for _, Object in Objects.Ladders do ssdoors.ESPLibrary:UpdateObjectColor(Object, Value) end
 end)
 
+Groupboxes.Visuals_ESP_Settings:AddToggle("ESPRainbow",     { Text = "Rainbow Effect", Default = false, Tooltip = "Makes the esp objects change colour like a rainbow." })
 Groupboxes.Visuals_ESP_Settings:AddToggle("ESPShowDistance",{ Text = "Show Distance",  Default = true,  Tooltip = "Shows how far away your character is from the object." })
 Groupboxes.Visuals_ESP_Settings:AddDivider()
 Groupboxes.Visuals_ESP_Settings:AddSlider("ESPFillTransparency",        { Text = "Fill Transparency",         Min = 0, Max = 1, Default = 0.75, Rounding = 2, Compact = true })
@@ -2002,7 +2088,7 @@ Groupboxes.Visuals_ESP_Settings:AddSlider("ESPTextSize",                { Text =
 Groupboxes.Visuals_ESP_Settings:AddDropdown("ESPTextFont", {
 	Text = "Text Font",
 	Values = { "Legacy","Arial","ArialBold","SourceSans","SourceSansBold","SourceSansLight","SourceSansItalic","Bodoni","Garamond","Cartoon","Code","Highway","SciFi","Arcade","Fantasy","Antique","SourceSansSemibold","Gotham","GothamMedium","GothamBold","GothamBlack","AmaticSC","Bangers","Creepster","DenkOne","Fondamento","FredokaOne","GrenzeGotisch","IndieFlower","JosefinSans","Jura","Kalam","LuckiestGuy","Merriweather","Michroma","Nunito","Oswald","PatrickHand","PermanentMarker","Roboto","RobotoCondensed","RobotoMono","Sarpanch","SpecialElite","TitilliumWeb","Ubuntu","BuilderSans","BuilderSansMedium","BuilderSansBold","BuilderSansExtraBold","Arimo","ArimoBold" },
-	Default = 20
+	Default = 12
 })
 Groupboxes.Visuals_ESP_Settings:AddDivider()
 Groupboxes.Visuals_ESP_Settings:AddDropdown("ESPTracersOrigin",  { Text = "Tracer Origin", Values = { "Bottom","Center","Top","Mouse" }, Default = 1 })
@@ -2012,6 +2098,7 @@ Groupboxes.Visuals_ESP_Settings:AddDivider()
 Groupboxes.Visuals_ESP_Settings:AddSlider("ESPArrowsRadius",     { Text = "Arrow Radius", Min = 100, Max = 500, Default = 250, Rounding = 0, Compact = true })
 Groupboxes.Visuals_ESP_Settings:AddToggle("ESPArrowsToggle",     { Text = "Enable Arrows", Default = false, Tooltip = "Shows arrow that point to off-screen objects." })
 
+ssdoors.ESPLibrary:SetRainbow(false)
 ssdoors.ESPLibrary:SetShowDistance(true)
 ssdoors.ESPLibrary:SetFillTransparency(0.75)
 ssdoors.ESPLibrary:SetOutlineTransparency(0)
@@ -2020,7 +2107,7 @@ ssdoors.ESPLibrary:SetTextOutlineTransparency(0)
 ssdoors.ESPLibrary:SetRenderLimit(240)
 ssdoors.ESPLibrary:SetFadeTime(0.25)
 ssdoors.ESPLibrary:SetTextSize(20)
-ssdoors.ESPLibrary:SetFont(Enum.Font.GothamBold)
+ssdoors.ESPLibrary:SetFont(Enum.Font.Highway)
 ssdoors.ESPLibrary:SetTracers(false)
 ssdoors.ESPLibrary:SetTracerSize(0.75)
 ssdoors.ESPLibrary:SetTracerOrigin("Bottom")
@@ -2028,6 +2115,7 @@ ssdoors.ESPLibrary:SetArrows(false)
 ssdoors.ESPLibrary:SetArrowRadius(250)
 ssdoors.ESPLibrary:SetDistanceSizeRatio(0.8)
 
+Toggles.ESPRainbow:OnChanged(function(V)        ssdoors.ESPLibrary:SetRainbow(V) end)
 Toggles.ESPShowDistance:OnChanged(function(V)   ssdoors.ESPLibrary:SetShowDistance(V) end)
 Options.ESPFillTransparency:OnChanged(function(V)        ssdoors.ESPLibrary:SetFillTransparency(V) end)
 Options.ESPOutlineTransparency:OnChanged(function(V)     ssdoors.ESPLibrary:SetOutlineTransparency(V) end)
@@ -2051,7 +2139,7 @@ Tabs.Floors:UpdateWarningBox({
 
 Groupboxes.Floors_Automation = Tabs.Floors:AddRightGroupbox("Automation")
 Groupboxes.Floors_Automation:AddToggle("AutoSteerMinecart", {
-	Text = "Minecart Auto-Steer", Default = false, Tooltip = "Automatically completes the minecart chase.",
+	Text = "Auto Steer Minecart", Default = false, Tooltip = "Automatically completes the minecart chase.",
 	Disabled = not Functions.CheckCompatability({"require"}), DisabledTooltip = Globals.IncompatibleMessage
 })
 Groupboxes.Floors_Automation:AddSlider("AutoSteerMinecartTurnDistance", {
@@ -2063,12 +2151,12 @@ Groupboxes.Floors_Automation:AddSlider("AutoSteerMinecartDuckDistance", {
 	Disabled = not Functions.CheckCompatability({"require"}), DisabledTooltip = Globals.IncompatibleMessage
 })
 Groupboxes.Floors_Automation:AddDivider()
-Groupboxes.Floors_Automation:AddToggle("RoomsAutoWalk",             { Text = "Auto Navigate Rooms",       Default = false, Tooltip = "Automatically moves and hides from entities in The Rooms." })
+Groupboxes.Floors_Automation:AddToggle("RoomsAutoWalk",             { Text = "Auto Rooms",       Default = false, Tooltip = "Automatically moves and hides from entities in The Rooms." })
 Groupboxes.Floors_Automation:AddSlider("RoomsAutoWalkPathfindTimeout", { Text = "Pathfind Timeout", Min = 0.5, Max = 3, Default = 1, Rounding = 1 })
 Groupboxes.Floors_Automation:AddToggle("RoomsAutoWalkIgnoreA60",    { Text = "Ignore A-60",      Default = false, Tooltip = "Continues to walk if entity 'A-60' is present, enables position spoof automatically." })
-Groupboxes.Floors_Automation:AddToggle("RoomsAutoWalkShowPathToggle", { Text = "Display Route",       Default = false, Tooltip = "Shows the current path of rooms auto-walk." })
+Groupboxes.Floors_Automation:AddToggle("RoomsAutoWalkShowPathToggle", { Text = "Show Path",       Default = false, Tooltip = "Shows the current path of rooms auto-walk." })
 Groupboxes.Floors_Automation:AddToggle("RoomsAutoWalkSpoofFootsteps", {
-    Text = "Mask Footsteps", Default = false, Tooltip = "Makes it appear as if your character is walking normally.",
+    Text = "Spoof Footsteps", Default = false, Tooltip = "Makes it appear as if your character is walking normally.",
     Disabled = not Functions.CheckCompatability({"hookmetamethod", "newcclosure", "getnamecallmethod"}), DisabledTooltip = Globals.IncompatibleMessage
 })
 
@@ -2077,7 +2165,11 @@ Toggles.RoomsAutoWalk:OnChanged(function()
 		if Object.Name == "PathNode" then Object:Destroy() end
 	end
 end)
-Toggles.RoomsAutoWalkShowPathToggle:AddColorPicker("RoomsAutoWalkShowPathColor", { Text = "Path", Default = SSDoorsBlue, Transparency = 0 })
+Toggles.RoomsAutoWalkShowPathToggle:AddColorPicker("RoomsAutoWalkShowPathColor", {
+	Text = "Path",
+	Default = SSDoorsBlue,
+	Transparency = 0,
+})
 Toggles.RoomsAutoWalkShowPathToggle:OnChanged(function(Value)
 	for _, Object in Globals.RoomsNodesFolder:GetChildren() do
 		if Object.Name == "PathNode" then Object.Transparency = Value and 0.5 or 1 end
@@ -2311,12 +2403,93 @@ Connections.RoomsHandler = CurrentRooms.ChildAdded:Connect(function(Room)
 	end
 end)
 
+Groupboxes.Floors_Completion = Tabs.Floors:AddRightGroupbox("Completion")
+Groupboxes.Floors_Completion:AddButton({
+    Text = "Auto Complete Dam Seek",
+    Tooltip = "Automatically teleports to and interacts with each water pump.",
+    Func = function()
+        if LatestRoom.Value < 100 or Floor ~= "Mines" then
+            Functions.Notify({Title = "You must be in Room 200 to do this."})
+            return
+        end
+
+		local IsCutscene = false
+		local CutsceneConnection = RemotesFolder.Cutscene.OnClientEvent:Connect(function()
+			IsCutscene = true
+			task.wait(7)
+			IsCutscene = false
+		end)
+
+        local function GetNextPump()
+            local Highest = {
+                Height = -69420,
+                Object = nil
+            }
+            for _, Object in pairs(Objects.Objectives) do
+                if Object.Name == "WaterPump" and Object:GetAttribute("SSDoors_Completed") ~= true then
+                    if Object.PrimaryPart and Object.PrimaryPart.Position.Y > Highest.Height then
+                        Highest.Object = Object
+                        Highest.Height = Object.PrimaryPart.Position.Y
+                    end
+                end
+            end
+            return Highest.Object
+        end
+
+        local function HandlePump(Pump)
+
+            while task.wait(0.1) do
+				if IsCutscene then
+					continue
+				end
+
+                Character:PivotTo(Pump:GetPivot())
+
+                local Prompt = Pump:FindFirstChild("ValvePrompt", true)
+                if Prompt then
+                    Functions.ForceFirePrompt(Prompt)
+                end
+
+                if Pump:GetAttribute("SSDoors_Completed") then
+                    break
+                end
+            end
+        end
+
+        Functions.Notify({Title = "Attempting to complete the valves.", Body = "Please wait."})
+        while task.wait(0.1) do
+            local Pump = GetNextPump()
+            if Pump then
+                HandlePump(Pump)
+            else
+                break
+            end
+        end
+        Functions.Notify({Title = "Successfully completed the valves."})
+    end
+})
+
+Groupboxes.Floors_Completion:AddButton({
+    Text = "Auto Complete Cringle",
+    Tooltip = "Instantly completes the quest.",
+    Func = function()
+        local TouchPart = CurrentRooms:FindFirstChild("RippleExitDoor", true)
+        if TouchPart then
+            Character:PivotTo(TouchPart:GetPivot())
+        end
+    end
+})
+
 Groupboxes.Floors_Visuals = Tabs.Floors:AddLeftGroupbox("Visuals")
 Groupboxes.Floors_Visuals:AddToggle("ShowSeekPathToggle", {
-	Text = "Seek Route", Default = false, Tooltip = "Shows you the correct path in seek chases.",
+	Text = "Show Seek Path", Default = false, Tooltip = "Shows you the correct path in seek chases.",
 	Risky = Floor ~= "Mines"
 })
-Toggles.ShowSeekPathToggle:AddColorPicker("ShowSeekPathColor", { Text = "Seek Path", Default = SSDoorsBlue, Transparency = 0 })
+Toggles.ShowSeekPathToggle:AddColorPicker("ShowSeekPathColor", {
+	Text = "Seek Path",
+	Default = SSDoorsBlue,
+	Transparency = 0,
+})
 
 local function UpdateBeamVisibility(BeamTable, ColorKey, Visible)
 	local Vis = Visible and 0 or 1
@@ -2332,36 +2505,40 @@ Toggles.ShowSeekPathToggle:OnChanged(function(V)  UpdateBeamVisibility(Objects.S
 Options.ShowSeekPathColor:OnChanged(function(V)   UpdateBeamColor(Objects.SeekHighlights, V) end)
 
 Groupboxes.Floors_Visuals:AddToggle("ShowEyestalkPathToggle", {
-	Text = "Eyestalk Route", Default = false, Tooltip = "Shows you the correct path in the eyestalk chase.",
+	Text = "Show Eyestalk Path", Default = false, Tooltip = "Shows you the correct path in the eyestalk chase.",
 	Risky = Floor ~= "Garden"
 })
-Toggles.ShowEyestalkPathToggle:AddColorPicker("ShowEyestalkPathColor", { Text = "Eyestalk Path", Default = SSDoorsBlue, Transparency = 0 })
+Toggles.ShowEyestalkPathToggle:AddColorPicker("ShowEyestalkPathColor", {
+	Text = "Eyestalk Path",
+	Default = SSDoorsBlue,
+	Transparency = 0,
+})
 Toggles.ShowEyestalkPathToggle:OnChanged(function(V) UpdateBeamVisibility(Objects.EyestalkHighlights, "ShowEyestalkPathColor", V) end)
 Options.ShowEyestalkPathColor:OnChanged(function(V)  UpdateBeamColor(Objects.EyestalkHighlights, V) end)
 
 Groupboxes.Floors_Bypass = Tabs.Floors:AddLeftGroupbox("Bypass")
 Groupboxes.Floors_Bypass:AddToggle("RemoveSeekTrigger", {
-	Text = "Disable Seek Trigger", Default = false, Tooltip = "Diables the 'Seek' chase trigger.",
+	Text = "Delete Seek Trigger", Default = false, Tooltip = "Diables the 'Seek' chase trigger.",
 	Risky = not (Floor == "Fools" or Floor == "OldHotel"),
 	Disabled = not Functions.CheckCompatability({"firetouchinterest"}), DisabledTooltip = Globals.IncompatibleMessage
 })
 Groupboxes.Floors_Bypass:AddToggle("RemoveFigure", {
-	Text = "Remove Figure", Default = false, Tooltip = "Completely removes the entity 'Figure' (doesn't always work).",
+	Text = "Delete Figure", Default = false, Tooltip = "Completely removes the entity 'Figure' (doesn't always work).",
 	Risky = not (Floor == "Fools" or Floor == "OldHotel" or Floor == "Mines"),
 	Disabled = not Functions.CheckCompatability({"isnetworkowner"}), DisabledTooltip = Globals.IncompatibleMessage
 })
 Groupboxes.Floors_Bypass:AddToggle("AutoRevive", {
-	Text = "Unlimited Revives", Default = false, Tooltip = "Automatically revives after dying, with unlimited respawns.",
+	Text = "Infinite Revives", Default = false, Tooltip = "Automatically revives after dying, with unlimited respawns.",
 	Risky = not (Floor == "Fools" or Floor == "OldHotel")
 })
 Groupboxes.Floors_Bypass:AddToggle("FigureGodmode", {
-	Text = "Protect From Figure", Default = false, Tooltip = "Prevents 'Figure' from hurting you.",
+	Text = "Figure Godmode", Default = false, Tooltip = "Prevents 'Figure' from hurting you.",
 	Risky = not (Floor == "Fools" or Floor == "OldHotel")
 })
 Groupboxes.Floors_Bypass:AddDivider()
-Groupboxes.Floors_Bypass:AddToggle("RemoveBasementGate",  { Text = "Open Basement Gate",   Default = false, Tooltip = "Removes the gate from basement rooms.",            Risky = not (Floor == "Fools" or Floor == "OldHotel") })
-Groupboxes.Floors_Bypass:AddToggle("RemovePaintingsDoor", { Text = "Open Paintings Door",  Default = false, Tooltip = "Removes the fireplace doors from painting rooms.", Risky = not (Floor == "Fools" or Floor == "OldHotel") })
-Groupboxes.Floors_Bypass:AddToggle("RemoveSkeletonDoor",  { Text = "Open Skeleton Door",   Default = false, Tooltip = "Removes the skeleton door from the infirmary.",    Risky = Floor ~= "Fools" })
+Groupboxes.Floors_Bypass:AddToggle("RemoveBasementGate",  { Text = "Remove Basement Gate",   Default = false, Tooltip = "Removes the gate from basement rooms.",            Risky = not (Floor == "Fools" or Floor == "OldHotel") })
+Groupboxes.Floors_Bypass:AddToggle("RemovePaintingsDoor", { Text = "Remove Paintings Door",  Default = false, Tooltip = "Removes the fireplace doors from painting rooms.", Risky = not (Floor == "Fools" or Floor == "OldHotel") })
+Groupboxes.Floors_Bypass:AddToggle("RemoveSkeletonDoor",  { Text = "Remove Skeleton Door",   Default = false, Tooltip = "Removes the skeleton door from the infirmary.",    Risky = Floor ~= "Fools" })
 
 local ObstructionNames = { ThingToOpen = "RemoveBasementGate", MovingDoor = "RemovePaintingsDoor", Wax_Door = "RemoveSkeletonDoor" }
 for ObjName, ToggleName in ObstructionNames do
@@ -2373,6 +2550,92 @@ for ObjName, ToggleName in ObstructionNames do
 		end
 	end)
 end
+
+Groupboxes.Floors_Farming = Tabs.Floors:AddLeftGroupbox("Farming")
+Groupboxes.Floors_Farming:AddToggle("KnobFarm", {
+    Text = "Knob Farm",
+    Default = false,
+    Tooltip = "Automatically gains knobs for you, dies and revives repeatedly.",
+})
+
+Groupboxes.Floors_Farming:AddButton({
+    Text = "Start Knob Farm",
+    Tooltip = "Starts farming knobs, click this when you have enough gold.",
+    Func = function()
+		if LatestRoom.Value ~= 0 then
+			Functions.Notify({Title = "You must be in Room 0 to use this."})
+			return
+		end
+
+		if LocalPlayer.PlayerGui:FindFirstChild("TopbarUI") then 
+			local GoldCount = LocalPlayer.PlayerGui.TopbarUI.Topbar.StatsTopbarHandler.StatModules.Gold.GoldVal
+			if GoldCount.Value <= 0 then
+				Functions.Notify({Title = "You must have gold to do this."})
+				return
+			end
+		end
+
+        Globals.KnobFarmStarted = true
+    end
+})
+
+Groupboxes.Floors_Farming:AddDivider()
+Groupboxes.Floors_Farming:AddButton({
+	Text = "Start Death Farm",
+	DoubleClick = true,
+	Tooltip = "Automatically farms deaths, joining new runs.",
+	Func = function()
+		loadstring(game:HttpGet("https://raw.githubusercontent.com/buildaran/ssdoors/main/Scripts/DeathFarm.luau"))()
+	end,
+
+	Disabled = not Functions.CheckCompatability({"fireproximityprompt", "firesignal"}),
+	DisabledTooltip = Globals.ImcompatibleMessage
+})
+Groupboxes.Floors_Farming:AddButton({
+	Text = "Copy Death Farm Loadstring",
+	DoubleClick = false,
+	Tooltip = "Copies the death farm loadstring to your clipboard.",
+	Func = function()
+		toclipboard([==[
+			loadstring(game:HttpGet("https://raw.githubusercontent.com/buildaran/ssdoors/main/Scripts/DeathFarm.luau"))()
+		]==])
+		Library:Notify("Loadstring has been copied to your clipboard.")
+	end,
+
+	Disabled = not Functions.CheckCompatability({"fireproximityprompt", "firesignal"}),
+	DisabledTooltip = Globals.ImcompatibleMessage
+})
+
+Toggles.KnobFarm:OnChanged(function(Value)
+    if Value then
+        Functions.Notify({Title = "Please collect some gold to earn knobs.", Body = "Click 'Start Knob Farm' when you're ready."})
+	else
+		Globals.KnobFarmStarted = false
+    end
+end)
+
+Globals.KnobFarmActive = false
+Globals.KnobFarmStarted = false
+Connections.KnobFarm = Services.RunService.Heartbeat:Connect(function()
+	if Toggles.KnobFarm.Value and Globals.KnobFarmStarted then
+		if not Globals.KnobFarmActive then
+			Globals.KnobFarmActive = true
+			if Functions.CheckCompatability({"replicatesignal"}) then
+				ssdoors.Environment.replicatesignal(LocalPlayer.Kill)
+			else
+				RemotesFolder.Underwater:FireServer(true)
+			end
+			while task.wait() do
+				if LocalPlayer:GetAttribute("Alive") then
+					break
+				end
+			end
+			RemotesFolder.Statistics:FireServer()
+			task.wait(0.25)
+			Globals.KnobFarmActive = false
+		end
+	end
+end)
 
 local MainHook
 local OtherHook
@@ -3140,7 +3403,7 @@ Functions.HandleObject = function(Object)
 	elseif Name == "WaterPump" then
 		if Toggles.ObjectiveESPToggle.Value then Functions.AddESP({ Object = Object:WaitForChild("Wheel"), Text = "Water Pump", Color = Options.ObjectiveESPColor.Value }, true) end
 		Object:WaitForChild("Wheel").Sound.Played:Once(function()
-			Object:SetAttribute("ssdoors_Completed", true)
+			Object:SetAttribute("SSDoors_Completed", true)
 
 			Functions.RemoveESP(Object.Wheel)
 			Functions.BlacklistESP(Object.Wheel)
@@ -4271,8 +4534,7 @@ if LocalPlayer.Character then
 	task.spawn(function() Functions.HandleCharacter(LocalPlayer.Character) end)
 end
 
-Connections.CharacterAdded = LocalPlayer.CharacterAdded:Connect(function(NewCharacter)
-	if Globals.Unloading then return end
+LocalPlayer.CharacterAdded:Connect(function(NewCharacter)
 	if Connections.MainHandler then
 		Connections.MainHandler:Disconnect()
 		Connections.MainHandler = nil
@@ -4282,8 +4544,6 @@ Connections.CharacterAdded = LocalPlayer.CharacterAdded:Connect(function(NewChar
 end)
 
 Library:OnUnload(function()
-	if Globals.Unloading then return end
-	Globals.Unloading = true
 	for Key, Connection in Connections do
 		if type(Key) == "string" then
 			pcall(function() Connection:Disconnect() end)
@@ -4322,13 +4582,8 @@ Library:OnUnload(function()
 	end
 	Services.Lighting.FogEnd = Globals.OldFog
 
-	if Globals.MainUI then
-		local Vignette = Globals.MainUI:FindFirstChild("HideVignette")
-		if not Vignette and Globals.MainUI:FindFirstChild("MainFrame") then
-			Vignette = Globals.MainUI.MainFrame:FindFirstChild("HideVignette")
-		end
-		if Vignette then Vignette.Image = "rbxassetid://6100076320" end
-	end
+	local Vignette = Globals.MainUI:FindFirstChild("HideVignette") or Globals.MainUI.MainFrame:FindFirstChild("HideVignette")
+	if Vignette then Vignette.Image = "rbxassetid://6100076320" end
 
 	local ModuleRestores = {
 		Screech = "Screech", Glitch = "Glitch", Shade = "Shade",
@@ -4356,11 +4611,8 @@ Library:OnUnload(function()
 	Globals.RoomsNodesFolder:Destroy()
 	Globals.ManipulateBody:Destroy()
 
-	local CurrentRoomObject = CurrentRooms and CurrentRooms:FindFirstChild(tostring(LocalPlayer:GetAttribute("CurrentRoom")))
-	local OldAmbient = CurrentRoomObject and CurrentRoomObject:GetAttribute("Ambient")
-	if OldAmbient then
-		Services.TweenService:Create(Services.Lighting, TweenInfo.new(0.2, Enum.EasingStyle.Exponential), { Ambient = OldAmbient }):Play()
-	end
+	local OldAmbient = CurrentRooms:FindFirstChild(tostring(LocalPlayer:GetAttribute("CurrentRoom"))):GetAttribute("Ambient")
+	Services.TweenService:Create(Services.Lighting, TweenInfo.new(0.2, Enum.EasingStyle.Exponential), { Ambient = OldAmbient }):Play()
 
 	for _, Prompt in Objects.Prompts do
 		if FakePrompts[Prompt] then
@@ -4374,37 +4626,32 @@ Library:OnUnload(function()
 		end
 	end
 
-	if Character then
-		Character:SetAttribute("CanJump", OldJump)
-		Character:SetAttribute("CanSlide", OldSlide)
-	end
+	Character:SetAttribute("CanJump",  OldJump)
+	Character:SetAttribute("CanSlide", OldSlide)
 
 	for _, Object in Services.Workspace:GetDescendants() do
 		task.spawn(function() Functions.RemoveESP(Object) end)
 	end
 
-	if Humanoid then
-		Humanoid.WalkSpeed  = Functions.GetCurrentSpeed()
-		Humanoid.JumpPower  = 5
-		Humanoid.HipHeight  = 2.367
-	end
+	Humanoid.WalkSpeed  = Functions.GetCurrentSpeed()
+	Humanoid.JumpPower  = 5
+	Humanoid.HipHeight  = 2.367
 
 	local BaseY = 0.18
-	if RootPart and Collision then Collision.Position = RootPart.Position + Vector3.new(0, BaseY, 0) end
-	if RootPart and CollisionPart then CollisionPart.Position = RootPart.Position + Vector3.new(0, BaseY, 0) end
-	if RootPart and CollisionPartClone then CollisionPartClone.Position = RootPart.Position + Vector3.new(0, BaseY, 0) end
+	Collision.Position          = RootPart.Position + Vector3.new(0, BaseY, 0)
+	CollisionPart.Position      = RootPart.Position + Vector3.new(0, BaseY, 0)
+	CollisionPartClone.Position = RootPart.Position + Vector3.new(0, BaseY, 0)
 
-	if Character and Character:FindFirstChild("LowerTorso") and Character.LowerTorso:FindFirstChild("Root") then
+	if Character:FindFirstChild("LowerTorso") and Character.LowerTorso:FindFirstChild("Root") then
 		Character.LowerTorso.Root.C1 = Globals.OriginalC1
 	end
-	if Collision and RootPart and Collision:FindFirstChild("CollisionCrouch") then
+	if Collision:FindFirstChild("CollisionCrouch") then
 		Collision.CollisionCrouch.Position = RootPart.Position + Vector3.new(0, -0.982, 0)
 	end
 
-	if CollisionClone then CollisionClone:Destroy() end
-	if CollisionPartClone then CollisionPartClone:Destroy() end
-	if ssdoors and ssdoors.ESPLibrary then ssdoors.ESPLibrary:Unload() end
-	if Container then Container:Destroy() end
+	CollisionClone:Destroy()
+	CollisionPartClone:Destroy()
+	ssdoors.ESPLibrary:Unload()
 
 	if Main_Game then
 		Main_Game.fovtarget   = 70
@@ -4419,4 +4666,7 @@ Library:OnUnload(function()
 
 	getgenv().ssdoors = nil
 end)
+
+while not Globals.MainUI do task.wait() end
+Functions.Notify({ Title = "SSDoors is ready", Body = "Loaded in " .. math.floor((tick() - LoadStart) * 1000) / 1000 .. "s • RightShift toggles the menu."})
 
