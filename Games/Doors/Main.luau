@@ -1815,14 +1815,14 @@ Groupboxes.Visuals_ESP_Toggles:AddDropdown("EntityESPOptions",     {
 })
 Groupboxes.Visuals_ESP_Toggles:AddToggle("EntityESPToggle",     { Text = "Entity Tracking",      Default = false, Tooltip = "Highlights selected entities as they appear." })
 
-Toggles.DoorESPToggle:AddColorPicker("DoorESPColor",           { Text = "Doors",        Default = SSDoorsBlue, 200, 255),  Transparency = 0 })
-Toggles.HidingSpotESPToggle:AddColorPicker("HidingSpotESPColor", { Text = "Hiding Spots", Default = SSDoorsBlue, 170, 0),  Transparency = 0 })
-Toggles.PlayerESPToggle:AddColorPicker("PlayerESPColor",       { Text = "Players",      Default = SSDoorsBlue, 255, 255), Transparency = 0 })
-Toggles.ChestESPToggle:AddColorPicker("ChestESPColor",         { Text = "Chests",       Default = SSDoorsBlue, 255, 0),   Transparency = 0 })
-Toggles.ItemESPToggle:AddColorPicker("ItemESPColor",           { Text = "Items",        Default = SSDoorsBlue, 0, 255),   Transparency = 0 })
-Toggles.CurrencyESPToggle:AddColorPicker("CurrencyESPColor",   { Text = "Currency",     Default = SSDoorsBlue, 255, 0),   Transparency = 0 })
-Toggles.LadderESPToggle:AddColorPicker("LadderESPColor",       { Text = "Ladders",      Default = SSDoorsBlue, 255, 255), Transparency = 0 })
-Toggles.EntityESPToggle:AddColorPicker("EntityESPColor",       { Text = "Entities",     Default = SSDoorsBlue, 0, 0),     Transparency = 0 })
+Toggles.DoorESPToggle:AddColorPicker("DoorESPColor", { Text = "Doors", Default = SSDoorsBlue, Transparency = 0 })
+Toggles.HidingSpotESPToggle:AddColorPicker("HidingSpotESPColor", { Text = "Hiding Spots", Default = SSDoorsBlue, Transparency = 0 })
+Toggles.PlayerESPToggle:AddColorPicker("PlayerESPColor", { Text = "Players", Default = SSDoorsBlue, Transparency = 0 })
+Toggles.ChestESPToggle:AddColorPicker("ChestESPColor", { Text = "Chests", Default = SSDoorsBlue, Transparency = 0 })
+Toggles.ItemESPToggle:AddColorPicker("ItemESPColor", { Text = "Items", Default = SSDoorsBlue, Transparency = 0 })
+Toggles.CurrencyESPToggle:AddColorPicker("CurrencyESPColor", { Text = "Currency", Default = SSDoorsBlue, Transparency = 0 })
+Toggles.LadderESPToggle:AddColorPicker("LadderESPColor", { Text = "Ladders", Default = SSDoorsBlue, Transparency = 0 })
+Toggles.EntityESPToggle:AddColorPicker("EntityESPColor", { Text = "Entities", Default = SSDoorsBlue, Transparency = 0 })
 
 local HidingSpotLabels = {
 	Wardrobe = "Closet", ["Backdoor_Wardrobe"] = "Closet", Toolshed = "Closet",
