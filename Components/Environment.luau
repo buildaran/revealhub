@@ -5,6 +5,8 @@ local Failed = 0
 local Passed = 0
 
 -- Intentionally trimmed: SSDoors only exposes the tests kept below.
+-- No executor-specific BrokenFeatures table is used in this trimmed build.
+local BrokenFeatures = {}
 
 local RootEnv = getfenv(0)
 
@@ -19,13 +21,13 @@ local function GetGlobal(Path)
 end
 
 local Global = setmetatable({}, {
-	__index = function(Self, Name)
+	__index = function(_, Name)
 		return GetGlobal(Name)
 	end,
 })
 
 local Services = setmetatable({}, {
-	__index = function(Self, Name)
+	__index = function(_, Name)
 		return game:GetService(Name)
 	end,
 })
@@ -42,7 +44,7 @@ end
 
 Environment.Results = Results
 Environment.PrintResults = function()
-	local Executor = Environment.identifyexecutor and Environment.identifyexecutor() or "Unknown"
+	local Executor = Global.identifyexecutor and Global.identifyexecutor() or "Unknown"
 	print("SSDoors Environment Test Result")
 	for _, Result in ipairs(Results) do
 		print(Result)
@@ -55,20 +57,20 @@ end
 
 local function RunTest(Name, Test, InternalName)
 	local TimedOut = false
-	Tested = Tested + 1
+	Tested += 1
 
 	local ExecutorName = Global.identifyexecutor and Global.identifyexecutor() or "Unknown"
 	local BrokenList = BrokenFeatures[ExecutorName]
 	if BrokenList and table.find(BrokenList, Name) then
 		AddResult(Name, "❌ " .. Name .. " failed: test has been skipped", false)
-		Failed = Failed + 1
+		Failed += 1
 		return
 	end
 
 	local TargetGlobal = Global[Name]
 	if not TargetGlobal then
 		AddResult(Name, "❌ " .. Name .. " failed: function is nil", false)
-		Failed = Failed + 1
+		Failed += 1
 		return
 	end
 
@@ -82,27 +84,26 @@ local function RunTest(Name, Test, InternalName)
 				local Key = InternalName or Name
 				Environment[Key] = TargetGlobal
 				AddResult(Name, "✅ " .. Name, true)
-				Passed = Passed + 1
+				Passed += 1
 			else
 				AddResult(Name, "❌ " .. Name .. " failed: " .. tostring(Result), false)
-				Failed = Failed + 1
+				Failed += 1
 			end
 		end
 		Finished = true
 	end)
 
 	while not Finished do
-		Time = Time + 1
+		Time += 1
 		if Time > 100 then
 			AddResult(Name, "❌ " .. Name .. " failed: test timed out", false)
-			Failed = Failed + 1
+			Failed += 1
 			TimedOut = true
 			break
 		end
 		task.wait(0.1)
 	end
 end
-
 RunTest("getgenv", function()
 	assert(typeof(Global.getgenv()) == "table", "Did not return a table")
 	Global.getgenv().Example = "Test"
