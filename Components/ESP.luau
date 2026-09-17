@@ -1,608 +1,190 @@
-local SSDoorsBlue = Color3.fromRGB(0, 170, 255)
+local Blue = Color3.fromRGB(0, 170, 255)
 
 local Library = {
-	Font = Enum.Font.GothamBold,
-	Rainbow = false,
-	Tracers = false,
-	Unloaded = false,
-	ShowDistance = false,
-	MatchColors = true,
-	Arrows = false,
-	TextTransparency = 0,
-	TracerOrigin = "Bottom",
-	FillTransparency = 0.75,
-	OutlineTransparency = 0,
-	TextOutlineTransparency = 0,
-	FadeTime = 0,
-	RenderLimit = 240,
-	TracerSize = 0.5,
-	ArrowRadius = 200,
-	TextSize = 20,
-	DistanceSizeRatio = 1,
-	OutlineColor = Color3.fromRGB(0, 170, 255),
-	RainbowColor = Color3.fromRGB(0, 170, 255),
-
-	ElementsEnabled = {},
-	TransparencyEnabled = {},
-	Highlights = {},
-	Labels = {},
-	Frames = {},
-	Lines = {},
-	ArrowsTable = {},
-	ColorTable = {},
-	TextTable = {},
-	ConnectionsTable = {},
-	Objects = {},
-	TotalObjects = {},
+    Font = Enum.Font.GothamBold,
+    TextSize = 18,
+    TextTransparency = 0,
+    TextOutlineTransparency = 0,
+    FillTransparency = 0.85,
+    OutlineTransparency = 0,
+    OutlineColor = Blue,
+    ShowDistance = false,
+    MatchColors = true,
+    Tracers = false,
+    Unloaded = false,
+    Highlights = {},
+    Labels = {},
+    Frames = {},
+    Lines = {},
+    Colors = {},
+    Texts = {},
+    Connections = {},
+    Objects = {},
 }
 
-local RainbowState = {
-	HueSetup = 0,
-	Hue = 0,
-	Step = 0,
-	Color = Color3.new(),
-}
-
-local CloneReference = cloneref or function(O) return O end
-local Players = CloneReference(game:GetService("Players"))
-local CoreGui = getgenv and CloneReference(game:GetService("CoreGui")) or Players.LocalPlayer.PlayerGui
-local Workspace = CloneReference(workspace)
-local RunService = CloneReference(game:GetService("RunService"))
-local TweenService = CloneReference(game:GetService("TweenService"))
-local UserInputService = CloneReference(game:GetService("UserInputService"))
-local Debris = CloneReference(game:GetService("Debris"))
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
 local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
 
-local function GetHiddenUI()
-	if gethui then return gethui() end
-	local Folder = Instance.new("Folder", CoreGui)
-	Folder.Name = ("%032x"):format(math.random(0, 2^31))
-	return Folder
-end
-
-function Library:GenerateRandomString()
-	local Chars = {}
-	local Pool = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	local PoolLen = #Pool
-	for I = 1, 24 do
-		local Idx = math.random(1, PoolLen)
-		Chars[I] = Pool:sub(Idx, Idx)
-	end
-	return table.concat(Chars)
-end
-
-local HiddenUI = GetHiddenUI()
-local Camera = Workspace.CurrentCamera
-
+local GuiParent = (gethui and gethui()) or (LocalPlayer and LocalPlayer:FindFirstChildOfClass("PlayerGui")) or CoreGui
 local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "RevealHubESP"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true
-ScreenGui.Name = Library:GenerateRandomString()
-ScreenGui.Parent = HiddenUI
+ScreenGui.Parent = GuiParent
 
 local HighlightsFolder = Instance.new("Folder")
-HighlightsFolder.Name = Library:GenerateRandomString()
+HighlightsFolder.Name = "Highlights"
 HighlightsFolder.Parent = ScreenGui
 
-local BillboardsFolder = Instance.new("Folder")
-BillboardsFolder.Name = Library:GenerateRandomString()
-BillboardsFolder.Parent = ScreenGui
+local LabelsFolder = Instance.new("Folder")
+LabelsFolder.Name = "Labels"
+LabelsFolder.Parent = ScreenGui
 
-local TracersFrame = Instance.new("Frame")
-TracersFrame.Size = UDim2.new(1, 0, 1, 0)
-TracersFrame.BackgroundTransparency = 1
-TracersFrame.Visible = false
-TracersFrame.Name = Library:GenerateRandomString()
-TracersFrame.Parent = ScreenGui
+local function NewLabel(Object, Text, Color)
+    local Billboard = Instance.new("BillboardGui")
+    Billboard.Name = "RevealLabel"
+    Billboard.AlwaysOnTop = true
+    Billboard.Size = UDim2.fromOffset(250, 40)
+    Billboard.StudsOffset = Vector3.new(0, 3, 0)
+    Billboard.Adornee = Object:IsA("Model") and Object.PrimaryPart or Object
+    Billboard.Parent = LabelsFolder
 
-local ArrowsFrame = Instance.new("Frame")
-ArrowsFrame.Size = UDim2.new(1, 0, 1, 0)
-ArrowsFrame.BackgroundTransparency = 1
-ArrowsFrame.Visible = false
-ArrowsFrame.Name = Library:GenerateRandomString()
-ArrowsFrame.Parent = ScreenGui
+    local Label = Instance.new("TextLabel")
+    Label.BackgroundTransparency = 1
+    Label.Size = UDim2.fromScale(1, 1)
+    Label.Font = Library.Font
+    Label.TextSize = Library.TextSize
+    Label.TextStrokeTransparency = Library.TextOutlineTransparency
+    Label.TextColor3 = Color or Blue
+    Label.Text = Text
+    Label.Parent = Billboard
 
-local ArrowTemplate = Instance.new("ImageLabel")
-ArrowTemplate.Image = "rbxassetid://16368985219"
-ArrowTemplate.Size = UDim2.new(0, 50, 0, 50)
-ArrowTemplate.AnchorPoint = Vector2.new(0.5, 0.5)
-ArrowTemplate.BackgroundTransparency = 1
-ArrowTemplate.ImageTransparency = 1
-local ArrowConstraint = Instance.new("UIAspectRatioConstraint")
-ArrowConstraint.AspectRatio = 1
-ArrowConstraint.Name = Library:GenerateRandomString()
-ArrowConstraint.Parent = ArrowTemplate
-
-local TweenInfoQuad = TweenInfo.new(0, Enum.EasingStyle.Quad)
-local function MakeTween(Instance_, Props)
-	local Info = TweenInfo.new(Library.FadeTime, Enum.EasingStyle.Quad)
-	return TweenService:Create(Instance_, Info, Props)
-end
-
-local function PlayTween(Instance_, Props)
-	MakeTween(Instance_, Props):Play()
-end
-
-local function DestroyObjectData(Object)
-	local Highlight = Library.Highlights[Object]
-	if Highlight then
-		Highlight:Destroy()
-		Library.Highlights[Object] = nil
-	end
-
-	local Frame = Library.Frames[Object]
-	if Frame then
-		Frame:Destroy()
-		Library.Frames[Object] = nil
-	end
-
-	local LineData = Library.Lines[Object]
-	if LineData then
-		if LineData[1] then LineData[1]:Destroy() end
-		Library.Lines[Object] = nil
-	end
-
-	local Arrow = Library.ArrowsTable[Object]
-	if Arrow then
-		Arrow:Destroy()
-		Library.ArrowsTable[Object] = nil
-	end
-
-	local Conns = Library.ConnectionsTable[Object]
-	if Conns then
-		for _, Conn in ipairs(Conns) do
-			Conn:Disconnect()
-		end
-		Library.ConnectionsTable[Object] = nil
-	end
-
-	Library.Labels[Object] = nil
-	Library.ColorTable[Object] = nil
-	Library.TextTable[Object] = nil
-	Library.ElementsEnabled[Object] = nil
-	Library.TransparencyEnabled[Object] = nil
-	Library.Objects[Object] = nil
-
-	for Idx = #Library.TotalObjects, 1, -1 do
-		if Library.TotalObjects[Idx] == Object then
-			table.remove(Library.TotalObjects, Idx)
-			break
-		end
-	end
+    return Billboard, Label
 end
 
 function Library:AddESP(Parameters)
-	local Object = Parameters.Object
-	if Library.ElementsEnabled[Object] == true or Library.Unloaded == true then return end
-	if not Object:IsA("BasePart") and not Object:IsA("Model") then return end
+    if self.Unloaded then return end
+    local Object = Parameters.Object
+    if not Object or not Object:IsDescendantOf(game) then return end
+    if self.Objects[Object] then return end
 
-	Library.ElementsEnabled[Object] = true
-	Library.TransparencyEnabled[Object] = false
-	Library.ConnectionsTable[Object] = Library.ConnectionsTable[Object] or {}
+    local Color = Parameters.Color or Blue
+    local Text = Parameters.Text or Object.Name
 
-	if Library.Highlights[Object] then
-		Library.Highlights[Object]:Destroy()
-		Library.Highlights[Object] = nil
-	end
+    local Highlight = Instance.new("Highlight")
+    Highlight.Adornee = Object
+    Highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    Highlight.FillTransparency = self.FillTransparency
+    Highlight.OutlineTransparency = self.OutlineTransparency
+    Highlight.FillColor = Color
+    Highlight.OutlineColor = self.MatchColors and Color or self.OutlineColor
+    Highlight.Parent = HighlightsFolder
 
-	local Highlight = Instance.new("Highlight")
-	Highlight.FillTransparency = 1
-	Highlight.OutlineTransparency = 1
-	Highlight.Name = Library:GenerateRandomString()
-	Highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-	Highlight.Adornee = Object
-	Highlight.Parent = HighlightsFolder
-	Library.Highlights[Object] = Highlight
+    local Billboard, Label = NewLabel(Object, Text, Color)
 
-	local TextFrame = Instance.new("Frame")
-	TextFrame.Visible = false
-	TextFrame.Name = Library:GenerateRandomString()
-	TextFrame.Size = UDim2.fromScale(1, 1)
-	TextFrame.BackgroundTransparency = 1
-	TextFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-	TextFrame.Parent = BillboardsFolder
+    self.Highlights[Object] = Highlight
+    self.Frames[Object] = Billboard
+    self.Labels[Object] = Label
+    self.Colors[Object] = Color
+    self.Texts[Object] = Text
+    self.Objects[Object] = true
+    self.Connections[Object] = {}
 
-	local TextLabel = Instance.new("TextLabel")
-	TextLabel.Name = Library:GenerateRandomString()
-	TextLabel.BackgroundTransparency = 1
-	TextLabel.Text = Parameters.Text
-	TextLabel.TextTransparency = 1
-	TextLabel.TextStrokeTransparency = Library.TextOutlineTransparency
-	TextLabel.Size = UDim2.new(1, 0, 1, 0)
-	TextLabel.Font = Library.Font
-	TextLabel.TextSize = Library.TextSize
-	TextLabel.RichText = true
-	TextLabel.TextColor3 = Parameters.Color or SSDoorsBlue
-	TextLabel.Parent = TextFrame
+    table.insert(self.Connections[Object], RunService.RenderStepped:Connect(function()
+        if self.Unloaded or not Object:IsDescendantOf(game) then
+            self:RemoveESP(Object)
+            return
+        end
 
-	Library.Frames[Object] = TextFrame
-	Library.Labels[Object] = TextLabel
-	Library.ColorTable[Object] = Parameters.Color or SSDoorsBlue
-	Library.TextTable[Object] = Parameters.Text
-	Library.Objects[Object] = Object
-	table.insert(Library.TotalObjects, Object)
+        local ActiveColor = self.Colors[Object] or Blue
+        local BaseText = self.Texts[Object] or Object.Name
+        local DistanceText = ""
+        if self.ShowDistance and Camera then
+            local Pos = Object:GetPivot().Position
+            local Distance = math.floor((Camera.CFrame.Position - Pos).Magnitude)
+            DistanceText = " [" .. Distance .. "]"
+        end
 
-	PlayTween(Highlight, { FillTransparency = Library.FillTransparency })
-	PlayTween(Highlight, { OutlineTransparency = Library.OutlineTransparency })
-
-	local TextFadeIn = MakeTween(TextLabel, { TextTransparency = Library.TextTransparency })
-	TextFadeIn.Completed:Once(function()
-		Library.TransparencyEnabled[Object] = true
-	end)
-	TextFadeIn:Play()
-	PlayTween(TextLabel, { TextStrokeTransparency = Library.TextOutlineTransparency })
-
-	local LineFrame = Instance.new("Frame")
-	LineFrame.Size = UDim2.new(0, 0, 0, 0)
-	LineFrame.BackgroundTransparency = 1
-	LineFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-	LineFrame.Name = Library:GenerateRandomString()
-	LineFrame.Parent = TracersFrame
-
-	local Stroke = Instance.new("UIStroke")
-	Stroke.Thickness = Library.TracerSize
-	Stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-	Stroke.Transparency = 1
-	Stroke.Name = Library:GenerateRandomString()
-	Stroke.Parent = LineFrame
-
-	PlayTween(LineFrame, { BackgroundTransparency = 0 })
-	PlayTween(Stroke, { Transparency = 0 })
-	Library.Lines[Object] = { LineFrame, Stroke }
-
-	task.spawn(function()
-		local Last = 0
-		local MinInterval = 1 / Library.RenderLimit
-
-		local function Render()
-			if not Object or not Object:IsDescendantOf(game) then
-				Library:RemoveESP(Object)
-				return
-			end
-
-			local ObjectPos = Object:GetPivot().Position
-			local ScreenPoint, OnScreen = Camera:WorldToViewportPoint(ObjectPos)
-
-			local Frame = Library.Frames[Object]
-			local Label = Library.Labels[Object]
-			local CachedHighlight = Library.Highlights[Object]
-			local LineData = Library.Lines[Object]
-
-			if LineData and LineData[1] then
-				LineData[1].Visible = OnScreen
-			end
-
-			if Frame then
-				Frame.Visible = OnScreen
-				if OnScreen then
-					Frame.Position = UDim2.new(0, ScreenPoint.X, 0, ScreenPoint.Y)
-				end
-			end
-
-			if not OnScreen then
-				if CachedHighlight then
-					CachedHighlight:Destroy()
-					Library.Highlights[Object] = nil
-					CachedHighlight = nil
-				end
-			elseif Library.ElementsEnabled[Object] == true and not CachedHighlight then
-				CachedHighlight = Instance.new("Highlight")
-				CachedHighlight.FillTransparency = 1
-				CachedHighlight.OutlineTransparency = 1
-				CachedHighlight.Name = Library:GenerateRandomString()
-				CachedHighlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-				CachedHighlight.Adornee = Object
-				CachedHighlight.Parent = HighlightsFolder
-				Library.Highlights[Object] = CachedHighlight
-			end
-
-			local ActiveColor = Library.Rainbow and RainbowState.Color or Library.ColorTable[Object] or SSDoorsBlue
-
-			if Label then
-				Label.TextColor3 = ActiveColor
-			end
-
-			if CachedHighlight then
-				local Distance = math.floor((Camera.CFrame.Position - ObjectPos).Magnitude)
-				local DistanceText = Library.ShowDistance
-					and ("\n" .. '<font size="' .. math.round(Library.TextSize * Library.DistanceSizeRatio) .. '">[' .. Distance .. ']</font>')
-					or ""
-				if Label then
-					Label.Text = Library.TextTable[Object] .. DistanceText
-				end
-
-				CachedHighlight.Enabled = true
-				CachedHighlight.FillColor = ActiveColor
-				CachedHighlight.OutlineColor = Library.MatchColors and ActiveColor or Library.OutlineColor
-
-				if Library.TransparencyEnabled[Object] == true then
-					CachedHighlight.FillTransparency = Library.FillTransparency
-					CachedHighlight.OutlineTransparency = Library.OutlineTransparency
-					if Label then
-						Label.TextTransparency = Library.TextTransparency
-						Label.TextStrokeTransparency = Library.TextOutlineTransparency
-					end
-				end
-			end
-
-			if LineData and CachedHighlight and Library.Tracers == true and OnScreen then
-				local ScreenSize = Camera.ViewportSize
-				local Origin
-
-				if Library.TracerOrigin == "Center" then
-					Origin = Vector2.new(ScreenSize.X / 2, ScreenSize.Y / 2)
-				elseif Library.TracerOrigin == "Top" then
-					Origin = Vector2.new(ScreenSize.X / 2, 0)
-				elseif Library.TracerOrigin == "Mouse" then
-					local MouseLoc = UserInputService:GetMouseLocation()
-					Origin = Vector2.new(LocalPlayer:GetMouse().X, MouseLoc.Y)
-				else
-					Origin = Vector2.new(ScreenSize.X / 2, ScreenSize.Y)
-				end
-
-				local Destination = Vector2.new(ScreenPoint.X, ScreenPoint.Y)
-				local MidPoint = (Origin + Destination) / 2
-				local Rotation = math.deg(math.atan2(Destination.Y - Origin.Y, Destination.X - Origin.X))
-				local Length = (Origin - Destination).Magnitude
-				local LF = LineData[1]
-				local SK = LineData[2]
-
-				LF.Position = UDim2.new(0, MidPoint.X, 0, MidPoint.Y)
-				LF.Size = UDim2.new(0, Length, 0, 1)
-				LF.Rotation = Rotation
-				LF.BackgroundColor3 = ActiveColor
-				LF.BorderSizePixel = 0
-				LF.Visible = true
-				SK.Color = ActiveColor
-				SK.Thickness = Library.TracerSize
-			end
-
-			if Library.Arrows == true then
-				local Arrow = Library.ArrowsTable[Object]
-				if Arrow == nil and Library.ElementsEnabled[Object] == true then
-					Arrow = ArrowTemplate:Clone()
-					Arrow.Name = Library:GenerateRandomString()
-					Arrow:WaitForChild(ArrowConstraint.Name, 5)
-					Arrow.Parent = ArrowsFrame
-					Library.ArrowsTable[Object] = Arrow
-					PlayTween(Arrow, { ImageTransparency = 0 })
-				elseif Arrow and Library.ElementsEnabled[Object] == true then
-					if OnScreen and ScreenPoint.Z > 0 then
-						Arrow.Visible = false
-					else
-						local ScreenSize = Camera.ViewportSize
-						local ScreenCenter = Vector2.new(ScreenSize.X / 2, ScreenSize.Y / 2)
-						local ToObj = (ObjectPos - Camera.CFrame.Position).Unit
-						local Dir = Vector2.new(ScreenPoint.X, ScreenPoint.Y) - ScreenCenter
-						if Camera.CFrame.LookVector:Dot(ToObj) < 0 then
-							Dir = -Dir
-						end
-						local Angle = math.atan2(Dir.Y, Dir.X)
-						local Radius = math.min(ScreenSize.X, ScreenSize.Y) / 2 - (400 - Library.ArrowRadius)
-						local ArrowPos = ScreenCenter + Dir.Unit * Radius
-
-						Arrow.Position = UDim2.new(0, ArrowPos.X, 0, ArrowPos.Y)
-						Arrow.Rotation = math.deg(Angle) - 90
-						Arrow.Visible = true
-						Arrow.ImageColor3 = Library.Rainbow and Library.RainbowColor or Library.ColorTable[Object]
-					end
-				end
-			end
-		end
-
-		local Connection
-		Connection = RunService.Heartbeat:Connect(function(Delta)
-			Last = Last + Delta
-			if Last >= 1 / Library.RenderLimit then
-				Last = 0
-				if Library.ElementsEnabled[Object] ~= true then
-					Connection:Disconnect()
-					return
-				end
-				Render()
-			end
-		end)
-		table.insert(Library.ConnectionsTable[Object], Connection)
-	end)
+        Label.Text = BaseText .. DistanceText
+        Label.TextColor3 = ActiveColor
+        Highlight.FillColor = ActiveColor
+        Highlight.OutlineColor = self.MatchColors and ActiveColor or self.OutlineColor
+    end))
 end
 
 function Library:RemoveESP(Object)
-	if Library.Unloaded == true or Library.ElementsEnabled[Object] ~= true then return end
-	Library.ElementsEnabled[Object] = false
-	Library.TransparencyEnabled[Object] = false
+    local Highlight = self.Highlights[Object]
+    if Highlight then Highlight:Destroy() end
+    local Billboard = self.Frames[Object]
+    if Billboard then Billboard:Destroy() end
 
-	local Label = Library.Labels[Object]
-	if Label then
-		PlayTween(Label, { TextTransparency = 1 })
-	end
+    local Conns = self.Connections[Object]
+    if Conns then
+        for _, Conn in ipairs(Conns) do
+            Conn:Disconnect()
+        end
+    end
 
-	local LineData = Library.Lines[Object]
-	if LineData then
-		if LineData[1] then PlayTween(LineData[1], { BackgroundTransparency = 1 }) end
-		if LineData[2] then PlayTween(LineData[2], { Transparency = 1 }) end
-	end
-
-	local Highlight = Library.Highlights[Object]
-	if Highlight then
-		PlayTween(Highlight, { FillTransparency = 1 })
-		PlayTween(Highlight, { OutlineTransparency = 1 })
-	end
-
-	local Arrow = Library.ArrowsTable[Object]
-	if Arrow then
-		PlayTween(Arrow, { ImageTransparency = 1 })
-	end
-
-	local FadeTime = Library.FadeTime
-
-	if not Object.Parent then
-		task.delay(FadeTime + 0.05, function()
-			if Library.ElementsEnabled[Object] == false then
-				DestroyObjectData(Object)
-			end
-		end)
-	else
-		task.delay(FadeTime + 0.05, function()
-			if Library.ElementsEnabled[Object] == false then
-				DestroyObjectData(Object)
-			else
-				local ReHighlight = Library.Highlights[Object]
-				if ReHighlight then
-					PlayTween(ReHighlight, { FillTransparency = Library.FillTransparency })
-					PlayTween(ReHighlight, { OutlineTransparency = Library.OutlineTransparency })
-				end
-			end
-		end)
-	end
-end
-
-function Library:UpdateObjectText(Object, Text)
-	if Library.TextTable[Object] ~= nil then
-		Library.TextTable[Object] = Text
-	end
+    self.Highlights[Object] = nil
+    self.Frames[Object] = nil
+    self.Labels[Object] = nil
+    self.Colors[Object] = nil
+    self.Texts[Object] = nil
+    self.Objects[Object] = nil
+    self.Connections[Object] = nil
 end
 
 function Library:UpdateObjectColor(Object, Color)
-	Library.ColorTable[Object] = Color
-	if Library.Labels[Object] and Library.Rainbow ~= true then
-		Library.Labels[Object].TextColor3 = Color
-	end
+    if self.Objects[Object] then
+        self.Colors[Object] = Color
+    end
 end
 
-function Library:SetColorTable(Name, Color)
-	Library.ColorTable[Name] = Color
-end
-
-function Library:SetFadeTime(Number)
-	Library.FadeTime = Number
-end
-
-function Library:SetRenderLimit(Number)
-	Library.RenderLimit = Number
-end
-
-function Library:SetTextTransparency(Number)
-	Library.TextTransparency = Number
-	for _, Label in pairs(Library.Labels) do
-		Label.TextTransparency = Number
-	end
-end
-
-function Library:SetFillTransparency(Number)
-	Library.FillTransparency = Number
-	for _, Highlight in pairs(Library.Highlights) do
-		if Highlight:IsA("Highlight") then
-			Highlight.FillTransparency = Number
-		end
-	end
-end
-
-function Library:SetOutlineTransparency(Number)
-	Library.OutlineTransparency = Number
-	for _, Highlight in pairs(Library.Highlights) do
-		if Highlight:IsA("Highlight") then
-			Highlight.OutlineTransparency = Number
-		end
-	end
-end
-
-function Library:SetTextSize(Number)
-	Library.TextSize = Number
-	for _, Label in pairs(Library.Labels) do
-		Label.TextSize = Number
-	end
-end
-
-function Library:SetTextOutlineTransparency(Number)
-	Library.TextOutlineTransparency = Number
-	for _, Label in pairs(Library.Labels) do
-		Label.TextStrokeTransparency = Number
-	end
+function Library:UpdateObjectText(Object, Text)
+    if self.Objects[Object] then
+        self.Texts[Object] = Text
+    end
 end
 
 function Library:SetFont(Font)
-	Library.Font = Font
-	for _, Label in pairs(Library.Labels) do
-		Label.Font = Font
-	end
+    self.Font = Font
+    for _, Label in pairs(self.Labels) do
+        Label.Font = Font
+    end
 end
 
-function Library:SetOutlineColor(Color)
-	Library.OutlineColor = Color
-end
-
-function Library:SetRainbow(Value)
-	Library.Rainbow = Value
+function Library:SetTextSize(Size)
+    self.TextSize = Size
+    for _, Label in pairs(self.Labels) do
+        Label.TextSize = Size
+    end
 end
 
 function Library:SetShowDistance(Value)
-	Library.ShowDistance = Value
+    self.ShowDistance = Value
 end
 
 function Library:SetMatchColors(Value)
-	Library.MatchColors = Value
-end
-
-function Library:SetTracers(Value)
-	Library.Tracers = Value
-	TracersFrame.Visible = Value
-end
-
-function Library:SetArrows(Value)
-	Library.Arrows = Value
-	ArrowsFrame.Visible = Value
-end
-
-function Library:SetArrowRadius(Value)
-	Library.ArrowRadius = Value
-end
-
-function Library:SetTracerOrigin(Value)
-	Library.TracerOrigin = Value
-end
-
-function Library:SetDistanceSizeRatio(Value)
-	Library.DistanceSizeRatio = Value
-end
-
-function Library:SetTracerSize(Value)
-	Library.TracerSize = 0.5 * Value
+    self.MatchColors = Value
 end
 
 function Library:Unload()
-	if Library.Unloaded then return end
-	Library.Unloaded = true
-	for _, Object in pairs(Library.Objects) do
-		Library:RemoveESP(Object)
-	end
-	for _, Conns in pairs(Library.ConnectionsTable) do
-		for _, Conn in ipairs(Conns) do
-			Conn:Disconnect()
-		end
-	end
-	RainbowConnection:Disconnect()
-	CameraConnection:Disconnect()
-	ScreenGui.Enabled = false
+    if self.Unloaded then return end
+    self.Unloaded = true
+    for Object in pairs(self.Objects) do
+        self:RemoveESP(Object)
+    end
+    if ScreenGui then
+        ScreenGui:Destroy()
+    end
 end
 
-RainbowConnection = RunService.RenderStepped:Connect(function(Delta)
-	RainbowState.Step = RainbowState.Step + Delta
-	if RainbowState.Step >= (1 / 60) then
-		RainbowState.Step = 0
-		RainbowState.HueSetup = RainbowState.HueSetup + (1 / 400)
-		if RainbowState.HueSetup > 1 then RainbowState.HueSetup = 0 end
-		RainbowState.Hue = RainbowState.HueSetup
-		RainbowState.Color = Color3.fromHSV(RainbowState.Hue, 0.8, 1)
-		Library.RainbowColor = RainbowState.Color
-	end
-end)
-
-CameraConnection = Workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(function()
-	Camera = Workspace.CurrentCamera
-end)
-
 if getgenv then
-	getgenv().SSDoorsESP = Library
+    getgenv().RevealHubESP = Library
 end
 
 return Library
