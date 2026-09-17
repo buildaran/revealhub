@@ -1,57 +1,44 @@
--- SSDoors Loader
-
-if ssdoors then
-    return
+-- Reveal Hub Loader
+if getgenv().RevealHub then
+    return getgenv().RevealHub
 end
 
-local BaseUrl = "https://raw.githubusercontent.com/buildaran/ssdoors/main/"
+local BaseUrl = "https://raw.githubusercontent.com/buildaran/revealhub/main/"
 
-getgenv().ssdoors = {
-    Name = "SSDoors",
+local RevealHub = {
+    Name = "Reveal Hub",
     Legit = true,
+    Version = "1.0.0",
 }
-
-local GameList = {
-    [2440500124] = "Doors",
-}
+getgenv().RevealHub = RevealHub
 
 local function LoadRemote(Path)
     local Source = game:HttpGet(BaseUrl .. Path)
     local Chunk, Error = loadstring(Source)
-
-    assert(
-        Chunk,
-        "SSDoors failed to compile " .. Path .. ": " .. tostring(Error)
-    )
-
+    assert(Chunk, "Reveal Hub failed to compile " .. Path .. ": " .. tostring(Error))
     return Chunk()
 end
 
 local function CloneReference(Object)
-    if ssdoors and ssdoors.Environment and ssdoors.Environment.cloneref then
-        return ssdoors.Environment.cloneref(Object)
+    if RevealHub.Environment and RevealHub.Environment.cloneref then
+        return RevealHub.Environment.cloneref(Object)
     end
-
     return Object
 end
 
-local Services = setmetatable({}, {
-    __index = function(_, Name)
-        return CloneReference(game:GetService(Name))
-    end,
-})
+RevealHub.Environment = LoadRemote("Components/Environment.luau")
+RevealHub.ESPLibrary = LoadRemote("Components/ESP.luau")
+RevealHub.Interface = LoadRemote("Components/Interface.luau")
 
--- Core modules only. Analytics and the old UI-library persistence block were removed.
-ssdoors.Environment = LoadRemote("Components/Environment.luau")
-ssdoors.ESPLibrary = LoadRemote("Components/ESP.luau")
+local GameList = {
+    [142823291] = "MurderMystery2",
+}
 
--- The Interface module is kept because the game loaders may depend on it.
-ssdoors.Interface = LoadRemote("Components/Interface.luau")
-
-local CurrentGame = GameList[game.GameId]
-
+local CurrentGame = GameList[game.GameId] or GameList[game.PlaceId]
 if CurrentGame then
     LoadRemote("Games/" .. CurrentGame .. "/Loader.luau")
 else
-    LoadRemote("Games/Universal/Loader.luau")
+    warn("Reveal Hub: this game is not supported. PlaceId: " .. tostring(game.PlaceId))
 end
+
+return RevealHub
