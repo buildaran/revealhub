@@ -1,5 +1,4 @@
 -- SSDoors Loader
--- Replace YOUR_USERNAME/YOUR_REPOSITORY in BaseUrl before publishing.
 
 if ssdoors then
     return
@@ -17,7 +16,15 @@ local GameList = {
 }
 
 local function LoadRemote(Path)
-    return loadstring(game:HttpGet(BaseUrl .. Path))()
+    local Source = game:HttpGet(BaseUrl .. Path)
+    local Chunk, Error = loadstring(Source)
+
+    assert(
+        Chunk,
+        "SSDoors failed to compile " .. Path .. ": " .. tostring(Error)
+    )
+
+    return Chunk()
 end
 
 local function CloneReference(Object)
