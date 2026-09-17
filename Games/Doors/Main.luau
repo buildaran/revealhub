@@ -1,16 +1,20 @@
 local LoadStart = tick()
-Abysall.SavePath = "Doors/Game"
+ssdoors.SavePath = "Doors/Game"
 
-local Library = Abysall.Interface.Library
-local SaveManager = Abysall.Interface.SaveManager
-local ThemeManager = Abysall.Interface.ThemeManager
+local Library = ssdoors.Interface.Library
+local SaveManager = ssdoors.Interface.SaveManager
+local ThemeManager = ssdoors.Interface.ThemeManager
 
 local Toggles = Library.Toggles
 local Options = Library.Options
+local SSDoorsBlue = Color3.fromRGB(0, 170, 255)
+
+-- SSDoors theme overrides.
+Library.AccentColor = SSDoorsBlue
 
 local function CloneReference(Object)
-	if Abysall and Abysall.Environment.cloneref then
-		return Abysall.Environment.cloneref(Object)
+	if ssdoors and ssdoors.Environment.cloneref then
+		return ssdoors.Environment.cloneref(Object)
 	end
 	return Object
 end
@@ -55,7 +59,7 @@ Globals.IncompatibleMessage = "Your executor doesn't support this feature."
 
 Functions.CheckCompatability = function(Array)
 	for _, Name in Array do
-		if not Abysall.Environment[Name] then
+		if not ssdoors.Environment[Name] then
 			return false
 		end
 	end
@@ -254,7 +258,7 @@ end
 
 local function GetHiddenContainer()
 	if Functions.CheckCompatability({"gethui"}) then
-		return Abysall.Environment.gethui()
+		return ssdoors.Environment.gethui()
 	end
 	return Services.CoreGui
 end
@@ -265,7 +269,7 @@ local NotificationLibrary = {
 }
 
 local Container = Instance.new("ScreenGui")
-Container.Name = Abysall.ESPLibrary:GenerateRandomString()
+Container.Name = ssdoors.ESPLibrary:GenerateRandomString()
 Container.Parent = GetHiddenContainer()
 Container.DisplayOrder = 32767
 Container.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
@@ -277,6 +281,8 @@ if not Library.Scheme then
 		end
 	})
 end
+
+Library.Scheme.AccentColor = SSDoorsBlue
 
 function NotificationLibrary:Notify(TitleText, Desc, Delay)
 	task.spawn(function()
@@ -328,6 +334,7 @@ function NotificationLibrary:Notify(TitleText, Desc, Delay)
 		Title.Size = UDim2.new(0, 205, 0, 15)
 		Title.Text = TitleText or "..."
 		Title.TextColor3 = Library.Scheme.FontColor
+        Title.Font = Enum.Font.GothamBold
 		Title.TextSize = 10
 		Title.TextStrokeTransparency = 0.75
 		Title.TextXAlignment = Enum.TextXAlignment.Left
@@ -340,6 +347,7 @@ function NotificationLibrary:Notify(TitleText, Desc, Delay)
 		Description.Size = UDim2.new(0, 205, 0, 18)
 		Description.Text = Desc or "..."
 		Description.TextColor3 = Library.Scheme.FontColor
+        Description.Font = Enum.Font.GothamBold
 		Description.TextTransparency = 0.1
 		Description.TextSize = 10
 		Description.TextStrokeTransparency = 0.75
@@ -401,131 +409,77 @@ function NotificationLibrary:Notify(TitleText, Desc, Delay)
 	end)
 end
 
+
 Globals.DoorsNotify = function(NotifyOptions)
-	local function PlaySound(Parent, SoundId, Volume)
-		local Sound = Instance.new("Sound")
-		Sound.SoundId = SoundId
-		Sound.Volume = Volume or 1
-		Sound.Parent = Parent
-		task.spawn(function()
-			task.wait(0.1)
-			Sound:Play()
-			Sound.Ended:Wait()
-			Sound:Destroy()
-		end)
-	end
+    local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+    local UIContainer = PlayerGui:FindFirstChild("GlobalUI") or PlayerGui:FindFirstChild("MainUI")
+    if not UIContainer then return end
 
-	local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
-	local UIContainer = PlayerGui:FindFirstChild("GlobalUI") or PlayerGui:FindFirstChild("MainUI")
-	if not UIContainer then return end
+    local AchievementsHolder = UIContainer:FindFirstChild("AchievementsHolder")
+    if not AchievementsHolder or not AchievementsHolder:FindFirstChild("Achievement") then return end
 
-	local AchievementsHolder = UIContainer:FindFirstChild("AchievementsHolder")
-	if not AchievementsHolder then return end
+    local Achievement = AchievementsHolder.Achievement:Clone()
+    Achievement.Size = UDim2.new(0, 0, 0, 0)
+    Achievement.Frame.Position = UDim2.new(1.1, 0, 0, 0)
+    Achievement.Name = "SSDoorsNotification"
+    Achievement.Visible = true
 
-	local Achievement = AchievementsHolder.Achievement:Clone()
-	Achievement.Size = UDim2.new(0, 0, 0, 0)
-	Achievement.Frame.Position = UDim2.new(1.1, 0, 0, 0)
-	Achievement.Name = "LiveAchievement"
-	Achievement.Visible = true
+    Achievement.Frame.TextLabel.Text = NotifyOptions.Style or "SSDoors"
+    Achievement.Frame.Details.Title.Text = NotifyOptions.Title or "SSDoors"
+    Achievement.Frame.Details.Desc.Text = NotifyOptions.Description or ""
+    Achievement.Frame.Details.Reason.Text = NotifyOptions.Reason or ""
+    Achievement.Frame.ImageLabel.Image = (NotifyOptions.Image ~= "" and NotifyOptions.Image) or "rbxassetid://6023426923"
 
-	Achievement.Frame.TextLabel.Text = NotifyOptions.Style or "NOTIFICATION"
-	Achievement.Frame.Details.Title.Text = NotifyOptions.Title or "Sem Título"
-	Achievement.Frame.Details.Desc.Text = NotifyOptions.Description or "Sem Descrição"
-	Achievement.Frame.Details.Reason.Text = NotifyOptions.Reason or ""
-	Achievement.Frame.ImageLabel.Image = (NotifyOptions.Image ~= "" and NotifyOptions.Image) or "rbxassetid://6023426923"
+    local Color = NotifyOptions.Color or SSDoorsBlue
+    Achievement.Frame.TextLabel.TextColor3 = Color
+    Achievement.Frame.UIStroke.Color = Color
+    Achievement.Frame.Glow.ImageColor3 = Color
 
-	local Color = NotifyOptions.Color or Color3.new(1, 1, 1)
-	Achievement.Frame.TextLabel.TextColor3 = Color
-	Achievement.Frame.UIStroke.Color = Color
-	Achievement.Frame.Glow.ImageColor3 = Color
-	Achievement.Parent = AchievementsHolder
+    for _, Object in ipairs(Achievement:GetDescendants()) do
+        if Object:IsA("TextLabel") then
+            Object.Font = Enum.Font.GothamBold
+        end
+    end
 
-	PlaySound(AchievementsHolder, "rbxassetid://10469938989", 1)
+    Achievement.Parent = AchievementsHolder
 
-	task.spawn(function()
-		Achievement:TweenSize(UDim2.new(1, 0, 0.2, 0), "In", "Quad", 0.8, true)
-		task.wait(0.8)
-		Achievement.Frame:TweenPosition(UDim2.new(0, 0, 0, 0), "Out", "Quad", 0.5, true)
-		Services.TweenService:Create(
-			Achievement.Frame.Glow,
-			TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
-			{ ImageTransparency = 1 }
-		):Play()
+    task.spawn(function()
+        Achievement:TweenSize(UDim2.new(1, 0, 0.2, 0), "In", "Quad", 0.8, true)
+        task.wait(0.8)
+        Achievement.Frame:TweenPosition(UDim2.new(0, 0, 0, 0), "Out", "Quad", 0.5, true)
+        Services.TweenService:Create(
+            Achievement.Frame.Glow,
+            TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+            { ImageTransparency = 1 }
+        ):Play()
 
-		if typeof(NotifyOptions.Time) == "Instance" then
-			NotifyOptions.Time.Destroying:Wait()
-		else
-			task.wait(NotifyOptions.Time or 5)
-		end
+        if typeof(NotifyOptions.Time) == "Instance" then
+            NotifyOptions.Time.Destroying:Wait()
+        else
+            task.wait(NotifyOptions.Time or 5)
+        end
 
-		Achievement.Frame:TweenPosition(UDim2.new(1.1, 0, 0, 0), "In", "Quad", 0.5, true)
-		task.wait(0.5)
-		Achievement:TweenSize(UDim2.new(1, 0, -0.1, 0), "InOut", "Quad", 0.5, true)
-		task.wait(0.5)
-		Achievement:Destroy()
-	end)
+        Achievement.Frame:TweenPosition(UDim2.new(1.1, 0, 0, 0), "In", "Quad", 0.5, true)
+        task.wait(0.5)
+        Achievement:TweenSize(UDim2.new(1, 0, -0.1, 0), "InOut", "Quad", 0.5, true)
+        task.wait(0.5)
+        Achievement:Destroy()
+    end)
 end
 
-Globals.STX = loadstring(game:HttpGet("https://raw.githubusercontent.com/bocaj111004/Abysall/refs/heads/main/Components/STX.luau"))()
 Functions.Notify = function(Settings)
-	local HiddenContainer = GetHiddenContainer()
+    Settings = Settings or {}
 
-	if not Settings.Body then
-		Settings.Body = "..."
-	end
+    local HiddenContainer = GetHiddenContainer()
+    if Toggles.NotifyPlaySound and Toggles.NotifyPlaySound.Value then
+        local Sound = Instance.new("Sound", HiddenContainer)
+        Sound.SoundId = "rbxassetid://8784885431"
+        Sound.Volume = Options.NotifySoundVolume and Options.NotifySoundVolume.Value or 3
+        Sound.PlayOnRemove = true
+        Sound:Destroy()
+    end
 
-	if not Options.NotifyStyle or Options.NotifyStyle.Value == "Abysall" then
-		local Sound = Instance.new("Sound", HiddenContainer)
-		Sound.SoundId = "rbxassetid://8784885431"
-		Sound.Volume = (Toggles.NotifyPlaySound and Toggles.NotifyPlaySound.Value and Options.NotifySoundVolume.Value) or (Toggles.NotifyPlaySound and 0 or 3)
-		Sound.PlayOnRemove = true
-		Sound:Destroy()
-		NotificationLibrary:Notify(Settings.Title, Settings.Body, Settings.Time or 5)
-	elseif Options.NotifyStyle.Value == "Doors" then
-		local IsEntity = false
-		local EntityName = ""
-		for Index, Object in pairs(Entities) do
-			if Object.NotifyMessage.Title == Settings.Title or Object.NotifyMessage.Body == Settings.Body then
-				IsEntity = true
-				EntityName = Index
-			end
-		end
-		Globals.DoorsNotify({
-			Title = "Abysall Hub",
-			Description = Settings.Title,
-			Reason = Settings.Body,
-			Style = IsEntity and "WARNING" or "NOTIFICATION",
-			Color = IsEntity and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(255, 222, 189),
-			Image = Settings.Image,
-			Time = Settings.Time
-		})
-	elseif Options.NotifyStyle.Value == "STX" then
-		local Sound = Instance.new("Sound", HiddenContainer)
-		Sound.SoundId = "rbxassetid://4590657391"
-		Sound.Volume = (Toggles.NotifyPlaySound and Toggles.NotifyPlaySound.Value and Options.NotifySoundVolume.Value) or (Toggles.NotifyPlaySound and 0 or 3)
-		Sound.PlayOnRemove = true
-		Sound:Destroy()
-
-		if Settings.Image then
-			Globals.STX:Notify(
-				{Title = "Abysall Hub", Description = Settings.Title .. "\n" .. Settings.Body},
-				{OutlineColor = Library.Scheme.AccentColor,Time = Settings.Time or 5, Type = "image"},
-				{Image = Settings.Image, ImageColor = Color3.fromRGB(255, 255, 255)}
-			)
-		else
-			Globals.STX:Notify(
-				{Title = "Abysall Hub", Description = Settings.Title .. "\n" .. Settings.Body},
-				{OutlineColor = Library.Scheme.AccentColor,Time = Settings.Time or 5, Type = "default"}
-			)
-		end
-	else
-		local Sound = Instance.new("Sound", HiddenContainer)
-		Sound.SoundId = "rbxassetid://4590662766"
-		Sound.Volume = (Toggles.NotifyPlaySound and Toggles.NotifyPlaySound.Value and Options.NotifySoundVolume.Value) or (Toggles.NotifyPlaySound and 0 or 3)
-		Sound.PlayOnRemove = true
-		Sound:Destroy()
-		Library:OldNotify({ Title = Settings.Title, Description = Settings.Body, Time = Settings.Time })
-	end
+    NotificationLibrary:Notify(Settings.Title or "SSDoors", Settings.Body or "...", Settings.Time or 5)
 end
 
 Functions.Caption = function(Text, PlaySound)
@@ -662,10 +616,10 @@ for _, Object in Services.Lighting:GetChildren() do
 end
 
 Globals.SeekNodesFolder = Instance.new("Folder", Services.Workspace)
-Globals.SeekNodesFolder.Name = Abysall.ESPLibrary:GenerateRandomString()
+Globals.SeekNodesFolder.Name = ssdoors.ESPLibrary:GenerateRandomString()
 
 Globals.RoomsNodesFolder = Instance.new("Folder", Services.Workspace)
-Globals.RoomsNodesFolder.Name = Abysall.ESPLibrary:GenerateRandomString()
+Globals.RoomsNodesFolder.Name = ssdoors.ESPLibrary:GenerateRandomString()
 
 Functions.SendChat = function(Message)
 	local Folder = Services.ReplicatedStorage:FindFirstChild("DefaultChatSystemEvents") or Instance.new("Folder")
@@ -898,21 +852,21 @@ Functions.AddESP = function(ESPOptions, RoomBased)
 		local ObjectRoom = tonumber(Object:GetAttribute("ParentRoom"))
 
 		if ObjectRoom == CurrentRoom or (table.find(Objects.Doors, Object) and ObjectRoom == CurrentRoom + 1) then
-			Abysall.ESPLibrary:AddESP(ESPOptions)
+			ssdoors.ESPLibrary:AddESP(ESPOptions)
 		end
 
 		local RoomConnection = LocalPlayer:GetAttributeChangedSignal("CurrentRoom"):Connect(function()
-			if Abysall.ESPLibrary.ColorTable[Object] then
-				ESPOptions.Color = Abysall.ESPLibrary.ColorTable[Object]
+			if ssdoors.ESPLibrary.ColorTable[Object] then
+				ESPOptions.Color = ssdoors.ESPLibrary.ColorTable[Object]
 			end
 
 			local NewCurrentRoom = tonumber(LocalPlayer:GetAttribute("CurrentRoom"))
 			local ObjRoom = tonumber(Object:GetAttribute("ParentRoom"))
 
 			if ObjRoom == NewCurrentRoom or (table.find(Objects.Doors, Object) and ObjRoom == NewCurrentRoom + 1) then
-				Abysall.ESPLibrary:AddESP(ESPOptions)
+				ssdoors.ESPLibrary:AddESP(ESPOptions)
 			else
-				Abysall.ESPLibrary:RemoveESP(Object)
+				ssdoors.ESPLibrary:RemoveESP(Object)
 			end
 		end)
 
@@ -921,14 +875,14 @@ Functions.AddESP = function(ESPOptions, RoomBased)
 
 		Object.Destroying:Once(function()
 			RoomConnection:Disconnect()
-			if Abysall then
-				Abysall.ESPLibrary:RemoveESP(Object)
+			if ssdoors then
+				ssdoors.ESPLibrary:RemoveESP(Object)
 			end
 			local Pos = table.find(Connections, RoomConnection)
 			if Pos then table.remove(Connections, Pos) end
 		end)
 	else
-		Abysall.ESPLibrary:AddESP(ESPOptions)
+		ssdoors.ESPLibrary:AddESP(ESPOptions)
 	end
 end
 
@@ -940,7 +894,7 @@ Functions.RemoveESP = function(Object)
 		local Pos = table.find(Connections, Conn)
 		if Pos then table.remove(Connections, Pos) end
 	end
-	Abysall.ESPLibrary:RemoveESP(Object)
+	ssdoors.ESPLibrary:RemoveESP(Object)
 end
 
 Functions.BlacklistESP = function(Object)
@@ -1012,8 +966,8 @@ Functions.GetRandomCode = function()
 end
 
 local Window = Library:CreateWindow({
-	Title = "Abysall Hub",
-	Footer = "dsc.gg/abysallhub",
+	Title = "SSDoors",
+	Footer = "SSDoors",
 	NotifySide = "Right",
 	ShowCustomCursor = false,
 	AutoShow = true,
@@ -1022,8 +976,6 @@ local Window = Library:CreateWindow({
 	MenuFadeTime = 0,
 	CornerRadius = 2,
 })
-
-Abysall.Interface.ApplyInfoTab(Window)
 
 local Tabs = {
 	General  = Window:AddTab("General", "house"),
@@ -1116,7 +1068,7 @@ Groupboxes.General_Self:AddToggle("DisableIdleKick", {
 })
 Toggles.DisableIdleKick:OnChanged(function(Value)
 	if Functions.CheckCompatability({"getconnections"}) then
-		for _, Conn in Abysall.Environment.getconnections(LocalPlayer.Idled) do
+		for _, Conn in ssdoors.Environment.getconnections(LocalPlayer.Idled) do
 			if Value then Conn:Disable() else Conn:Enable() end
 		end
 	end
@@ -1248,7 +1200,7 @@ Groupboxes.Self_Misc:AddButton({
 	Func = function()
 		Globals.SelfKilled = true
 		if Functions.CheckCompatability({"replicatesignal"}) then
-			Abysall.Environment.replicatesignal(LocalPlayer.Kill)
+			ssdoors.Environment.replicatesignal(LocalPlayer.Kill)
 		else
 			if RemotesFolder:FindFirstChild("Underwater") then
 				RemotesFolder.Underwater:FireServer(true)
@@ -1742,7 +1694,6 @@ end)
 Groupboxes.Visuals_EntitySettings:AddToggle("EntityChatToggle", { Text = "Notify Chat", Default = false, Tooltip = "Sends a message in the chat when an entity spawns." })
 Groupboxes.Visuals_EntitySettings:AddInput("EntityChatMessage", { Text = "Message", Default = "spawned!", Numeric = false, Placeholder = "Message" })
 Groupboxes.Visuals_EntitySettings:AddDivider()
-Groupboxes.Visuals_EntitySettings:AddDropdown("NotifyStyle", { Text = "Notify Style", Values = { "Abysall", "Doors", "STX", "Library" }, Default = 1 })
 Groupboxes.Visuals_EntitySettings:AddSlider("NotifySoundVolume", { Text = "Sound Volume", Min = 0, Max = 10, Default = 3, Rounding = 1 })
 Groupboxes.Visuals_EntitySettings:AddToggle("NotifyPlaySound", { Text = "Play Sound", Default = true, Tooltip = "Makes notifications play an alert sound." })
 Groupboxes.Visuals_EntitySettings:AddToggle("NotifyKeepNotifications", { Text = "Keep Notifications", Default = false, Tooltip = "Certain notifications will stay on screen until they are no longer needed." })
@@ -1756,7 +1707,7 @@ Groupboxes.Visuals_ESP_Settings = Groupboxes.Visuals_ESP:AddTab("Settings")
 
 local function MakeESPToggle(ToggleKey, ColorKey, Text, Tooltip, ObjectsTable, LabelFunc, RoomBased)
 	Groupboxes.Visuals_ESP_Toggles:AddToggle(ToggleKey, { Text = Text, Default = false, Tooltip = Tooltip })
-	Toggles[ToggleKey]:AddColorPicker(ColorKey, { Text = Text, Default = Options[ColorKey] and Options[ColorKey].Value or Color3.new(1,1,1), Transparency = 0 })
+	Toggles[ToggleKey]:AddColorPicker(ColorKey, { Text = Text, Default = Options[ColorKey] and Options[ColorKey].Value or SSDoorsBlue, Transparency = 0 })
 	Toggles[ToggleKey]:OnChanged(function(Value)
 		for _, Object in ObjectsTable do
 			if Value then
@@ -1771,13 +1722,13 @@ local function MakeESPToggle(ToggleKey, ColorKey, Text, Tooltip, ObjectsTable, L
 	end)
 	Options[ColorKey]:OnChanged(function(Value)
 		for _, Object in ObjectsTable do
-			Abysall.ESPLibrary:UpdateObjectColor(Object, Value)
+			ssdoors.ESPLibrary:UpdateObjectColor(Object, Value)
 		end
 	end)
 end
 
 Groupboxes.Visuals_ESP_Toggles:AddToggle("ObjectiveESPToggle", { Text = "Objectives", Default = false, Tooltip = "Highlights all objects required to progress." })
-Toggles.ObjectiveESPToggle:AddColorPicker("ObjectiveESPColor", { Text = "Objectives", Default = Color3.fromRGB(0, 255, 0), Transparency = 0 })
+Toggles.ObjectiveESPToggle:AddColorPicker("ObjectiveESPColor", { Text = "Objectives", Default = SSDoorsBlue, Transparency = 0 })
 
 local ObjectiveLabels = {
 	["KeyObtain"]              = "Door Key",
@@ -1817,7 +1768,7 @@ Toggles.ObjectiveESPToggle:OnChanged(function(Value)
 end)
 Options.ObjectiveESPColor:OnChanged(function(Value)
 	for _, Object in Objects.Objectives do
-		Abysall.ESPLibrary:UpdateObjectColor(Object, Value)
+		ssdoors.ESPLibrary:UpdateObjectColor(Object, Value)
 	end
 end)
 
@@ -1875,7 +1826,7 @@ Toggles.DoorESPToggle:OnChanged(function(Value)
 	end
 end)
 Options.DoorESPColor:OnChanged(function(Value)
-	for _, Object in Objects.Doors do Abysall.ESPLibrary:UpdateObjectColor(Object, Value) end
+	for _, Object in Objects.Doors do ssdoors.ESPLibrary:UpdateObjectColor(Object, Value) end
 end)
 
 Toggles.HidingSpotESPToggle:OnChanged(function(Value)
@@ -1886,7 +1837,7 @@ Toggles.HidingSpotESPToggle:OnChanged(function(Value)
 	end
 end)
 Options.HidingSpotESPColor:OnChanged(function(Value)
-	for _, Object in Objects.HidingSpots do Abysall.ESPLibrary:UpdateObjectColor(Object, Value) end
+	for _, Object in Objects.HidingSpots do ssdoors.ESPLibrary:UpdateObjectColor(Object, Value) end
 end)
 
 Toggles.PlayerESPToggle:OnChanged(function(Value)
@@ -1904,7 +1855,7 @@ end)
 Options.PlayerESPColor:OnChanged(function(Value)
 	for _, Player in Services.Players:GetPlayers() do
 		if Player.Character and Player ~= LocalPlayer then
-			Abysall.ESPLibrary:UpdateObjectColor(Player.Character, Value)
+			ssdoors.ESPLibrary:UpdateObjectColor(Player.Character, Value)
 		end
 	end
 end)
@@ -1928,7 +1879,7 @@ Toggles.ChestESPToggle:OnChanged(function(Value)
 end)
 
 Options.ChestESPColor:OnChanged(function(Value)
-	for _, Object in Objects.Chests do Abysall.ESPLibrary:UpdateObjectColor(Object, Value) end
+	for _, Object in Objects.Chests do ssdoors.ESPLibrary:UpdateObjectColor(Object, Value) end
 end)
 
 Toggles.ItemESPToggle:OnChanged(function(Value)
@@ -1944,7 +1895,7 @@ Toggles.ItemESPToggle:OnChanged(function(Value)
 	end
 end)
 Options.ItemESPColor:OnChanged(function(Value)
-	for _, Object in Objects.Items do Abysall.ESPLibrary:UpdateObjectColor(Object, Value) end
+	for _, Object in Objects.Items do ssdoors.ESPLibrary:UpdateObjectColor(Object, Value) end
 end)
 
 Toggles.CurrencyESPToggle:OnChanged(function(Value)
@@ -1963,7 +1914,7 @@ Toggles.CurrencyESPToggle:OnChanged(function(Value)
 	end
 end)
 Options.CurrencyESPColor:OnChanged(function(Value)
-	for _, Object in Objects.Currency do Abysall.ESPLibrary:UpdateObjectColor(Object, Value) end
+	for _, Object in Objects.Currency do ssdoors.ESPLibrary:UpdateObjectColor(Object, Value) end
 end)
 
 Toggles.EntityESPToggle:OnChanged(function(Value)
@@ -1999,7 +1950,7 @@ Options.EntityESPOptions:OnChanged(function(Value)
 end)
 
 Options.EntityESPColor:OnChanged(function(Value)
-	for _, Object in Objects.Entities do Abysall.ESPLibrary:UpdateObjectColor(Object, Value) end
+	for _, Object in Objects.Entities do ssdoors.ESPLibrary:UpdateObjectColor(Object, Value) end
 end)
 
 Toggles.LadderESPToggle:OnChanged(function(Value)
@@ -2009,10 +1960,9 @@ Toggles.LadderESPToggle:OnChanged(function(Value)
 	end
 end)
 Options.LadderESPColor:OnChanged(function(Value)
-	for _, Object in Objects.Ladders do Abysall.ESPLibrary:UpdateObjectColor(Object, Value) end
+	for _, Object in Objects.Ladders do ssdoors.ESPLibrary:UpdateObjectColor(Object, Value) end
 end)
 
-Groupboxes.Visuals_ESP_Settings:AddToggle("ESPRainbow",     { Text = "Rainbow Effect", Default = false, Tooltip = "Makes the esp objects change colour like a rainbow." })
 Groupboxes.Visuals_ESP_Settings:AddToggle("ESPShowDistance",{ Text = "Show Distance",  Default = true,  Tooltip = "Shows how far away your character is from the object." })
 Groupboxes.Visuals_ESP_Settings:AddDivider()
 Groupboxes.Visuals_ESP_Settings:AddSlider("ESPFillTransparency",        { Text = "Fill Transparency",         Min = 0, Max = 1, Default = 0.75, Rounding = 2, Compact = true })
@@ -2025,7 +1975,7 @@ Groupboxes.Visuals_ESP_Settings:AddSlider("ESPTextSize",                { Text =
 Groupboxes.Visuals_ESP_Settings:AddDropdown("ESPTextFont", {
 	Text = "Text Font",
 	Values = { "Legacy","Arial","ArialBold","SourceSans","SourceSansBold","SourceSansLight","SourceSansItalic","Bodoni","Garamond","Cartoon","Code","Highway","SciFi","Arcade","Fantasy","Antique","SourceSansSemibold","Gotham","GothamMedium","GothamBold","GothamBlack","AmaticSC","Bangers","Creepster","DenkOne","Fondamento","FredokaOne","GrenzeGotisch","IndieFlower","JosefinSans","Jura","Kalam","LuckiestGuy","Merriweather","Michroma","Nunito","Oswald","PatrickHand","PermanentMarker","Roboto","RobotoCondensed","RobotoMono","Sarpanch","SpecialElite","TitilliumWeb","Ubuntu","BuilderSans","BuilderSansMedium","BuilderSansBold","BuilderSansExtraBold","Arimo","ArimoBold" },
-	Default = 12
+	Default = 20
 })
 Groupboxes.Visuals_ESP_Settings:AddDivider()
 Groupboxes.Visuals_ESP_Settings:AddDropdown("ESPTracersOrigin",  { Text = "Tracer Origin", Values = { "Bottom","Center","Top","Mouse" }, Default = 1 })
@@ -2035,38 +1985,36 @@ Groupboxes.Visuals_ESP_Settings:AddDivider()
 Groupboxes.Visuals_ESP_Settings:AddSlider("ESPArrowsRadius",     { Text = "Arrow Radius", Min = 100, Max = 500, Default = 250, Rounding = 0, Compact = true })
 Groupboxes.Visuals_ESP_Settings:AddToggle("ESPArrowsToggle",     { Text = "Enable Arrows", Default = false, Tooltip = "Shows arrow that point to off-screen objects." })
 
-Abysall.ESPLibrary:SetRainbow(false)
-Abysall.ESPLibrary:SetShowDistance(true)
-Abysall.ESPLibrary:SetFillTransparency(0.75)
-Abysall.ESPLibrary:SetOutlineTransparency(0)
-Abysall.ESPLibrary:SetTextTransparency(0)
-Abysall.ESPLibrary:SetTextOutlineTransparency(0)
-Abysall.ESPLibrary:SetRenderLimit(240)
-Abysall.ESPLibrary:SetFadeTime(0.25)
-Abysall.ESPLibrary:SetTextSize(20)
-Abysall.ESPLibrary:SetFont(Enum.Font.Highway)
-Abysall.ESPLibrary:SetTracers(false)
-Abysall.ESPLibrary:SetTracerSize(0.75)
-Abysall.ESPLibrary:SetTracerOrigin("Bottom")
-Abysall.ESPLibrary:SetArrows(false)
-Abysall.ESPLibrary:SetArrowRadius(250)
-Abysall.ESPLibrary:SetDistanceSizeRatio(0.8)
+ssdoors.ESPLibrary:SetShowDistance(true)
+ssdoors.ESPLibrary:SetFillTransparency(0.75)
+ssdoors.ESPLibrary:SetOutlineTransparency(0)
+ssdoors.ESPLibrary:SetTextTransparency(0)
+ssdoors.ESPLibrary:SetTextOutlineTransparency(0)
+ssdoors.ESPLibrary:SetRenderLimit(240)
+ssdoors.ESPLibrary:SetFadeTime(0.25)
+ssdoors.ESPLibrary:SetTextSize(20)
+ssdoors.ESPLibrary:SetFont(Enum.Font.GothamBold)
+ssdoors.ESPLibrary:SetTracers(false)
+ssdoors.ESPLibrary:SetTracerSize(0.75)
+ssdoors.ESPLibrary:SetTracerOrigin("Bottom")
+ssdoors.ESPLibrary:SetArrows(false)
+ssdoors.ESPLibrary:SetArrowRadius(250)
+ssdoors.ESPLibrary:SetDistanceSizeRatio(0.8)
 
-Toggles.ESPRainbow:OnChanged(function(V)        Abysall.ESPLibrary:SetRainbow(V) end)
-Toggles.ESPShowDistance:OnChanged(function(V)   Abysall.ESPLibrary:SetShowDistance(V) end)
-Options.ESPFillTransparency:OnChanged(function(V)        Abysall.ESPLibrary:SetFillTransparency(V) end)
-Options.ESPOutlineTransparency:OnChanged(function(V)     Abysall.ESPLibrary:SetOutlineTransparency(V) end)
-Options.ESPTextTransparency:OnChanged(function(V)        Abysall.ESPLibrary:SetTextTransparency(V) end)
-Options.ESPTextOutlineTransparency:OnChanged(function(V) Abysall.ESPLibrary:SetTextOutlineTransparency(V) end)
-Options.ESPFadeTime:OnChanged(function(V)        Abysall.ESPLibrary:SetFadeTime(V) end)
-Options.ESPRenderLimit:OnChanged(function(V)     Abysall.ESPLibrary:SetRenderLimit(V) end)
-Options.ESPTextSize:OnChanged(function(V)        Abysall.ESPLibrary:SetTextSize(V) end)
-Options.ESPTextFont:OnChanged(function(V)        Abysall.ESPLibrary:SetFont(Enum.Font[V]) end)
-Toggles.ESPTracersToggle:OnChanged(function(V)   Abysall.ESPLibrary:SetTracers(V) end)
-Options.ESPTracersOrigin:OnChanged(function(V)   Abysall.ESPLibrary:SetTracerOrigin(V) end)
-Options.ESPTracerThickness:OnChanged(function(V) Abysall.ESPLibrary:SetTracerSize(V) end)
-Toggles.ESPArrowsToggle:OnChanged(function(V)    Abysall.ESPLibrary:SetArrows(V) end)
-Options.ESPArrowsRadius:OnChanged(function(V)    Abysall.ESPLibrary:SetArrowRadius(V) end)
+Toggles.ESPShowDistance:OnChanged(function(V)   ssdoors.ESPLibrary:SetShowDistance(V) end)
+Options.ESPFillTransparency:OnChanged(function(V)        ssdoors.ESPLibrary:SetFillTransparency(V) end)
+Options.ESPOutlineTransparency:OnChanged(function(V)     ssdoors.ESPLibrary:SetOutlineTransparency(V) end)
+Options.ESPTextTransparency:OnChanged(function(V)        ssdoors.ESPLibrary:SetTextTransparency(V) end)
+Options.ESPTextOutlineTransparency:OnChanged(function(V) ssdoors.ESPLibrary:SetTextOutlineTransparency(V) end)
+Options.ESPFadeTime:OnChanged(function(V)        ssdoors.ESPLibrary:SetFadeTime(V) end)
+Options.ESPRenderLimit:OnChanged(function(V)     ssdoors.ESPLibrary:SetRenderLimit(V) end)
+Options.ESPTextSize:OnChanged(function(V)        ssdoors.ESPLibrary:SetTextSize(V) end)
+Options.ESPTextFont:OnChanged(function(V)        ssdoors.ESPLibrary:SetFont(Enum.Font[V]) end)
+Toggles.ESPTracersToggle:OnChanged(function(V)   ssdoors.ESPLibrary:SetTracers(V) end)
+Options.ESPTracersOrigin:OnChanged(function(V)   ssdoors.ESPLibrary:SetTracerOrigin(V) end)
+Options.ESPTracerThickness:OnChanged(function(V) ssdoors.ESPLibrary:SetTracerSize(V) end)
+Toggles.ESPArrowsToggle:OnChanged(function(V)    ssdoors.ESPLibrary:SetArrows(V) end)
+Options.ESPArrowsRadius:OnChanged(function(V)    ssdoors.ESPLibrary:SetArrowRadius(V) end)
 
 Tabs.Floors:UpdateWarningBox({
 	Visible = true,
@@ -2102,7 +2050,7 @@ Toggles.RoomsAutoWalk:OnChanged(function()
 		if Object.Name == "PathNode" then Object:Destroy() end
 	end
 end)
-Toggles.RoomsAutoWalkShowPathToggle:AddColorPicker("RoomsAutoWalkShowPathColor", { Text = "Path", Default = Color3.fromRGB(0, 255, 0), Transparency = 0 })
+Toggles.RoomsAutoWalkShowPathToggle:AddColorPicker("RoomsAutoWalkShowPathColor", { Text = "Path", Default = SSDoorsBlue, Transparency = 0 })
 Toggles.RoomsAutoWalkShowPathToggle:OnChanged(function(Value)
 	for _, Object in Globals.RoomsNodesFolder:GetChildren() do
 		if Object.Name == "PathNode" then Object.Transparency = Value and 0.5 or 1 end
@@ -2336,89 +2284,12 @@ Connections.RoomsHandler = CurrentRooms.ChildAdded:Connect(function(Room)
 	end
 end)
 
-Groupboxes.Floors_Completion = Tabs.Floors:AddRightGroupbox("Completion")
-Groupboxes.Floors_Completion:AddButton({
-    Text = "Auto Complete Dam Seek",
-    Tooltip = "Automatically teleports to and interacts with each water pump.",
-    Func = function()
-        if LatestRoom.Value < 100 or Floor ~= "Mines" then
-            Functions.Notify({Title = "You must be in Room 200 to do this."})
-            return
-        end
-
-		local IsCutscene = false
-		local CutsceneConnection = RemotesFolder.Cutscene.OnClientEvent:Connect(function()
-			IsCutscene = true
-			task.wait(7)
-			IsCutscene = false
-		end)
-
-        local function GetNextPump()
-            local Highest = {
-                Height = -69420,
-                Object = nil
-            }
-            for _, Object in pairs(Objects.Objectives) do
-                if Object.Name == "WaterPump" and Object:GetAttribute("Abysall_Completed") ~= true then
-                    if Object.PrimaryPart and Object.PrimaryPart.Position.Y > Highest.Height then
-                        Highest.Object = Object
-                        Highest.Height = Object.PrimaryPart.Position.Y
-                    end
-                end
-            end
-            return Highest.Object
-        end
-
-        local function HandlePump(Pump)
-
-            while task.wait(0.1) do
-				if IsCutscene then
-					continue
-				end
-
-                Character:PivotTo(Pump:GetPivot())
-
-                local Prompt = Pump:FindFirstChild("ValvePrompt", true)
-                if Prompt then
-                    Functions.ForceFirePrompt(Prompt)
-                end
-
-                if Pump:GetAttribute("Abysall_Completed") then
-                    break
-                end
-            end
-        end
-
-        Functions.Notify({Title = "Attempting to complete the valves.", Body = "Please wait."})
-        while task.wait(0.1) do
-            local Pump = GetNextPump()
-            if Pump then
-                HandlePump(Pump)
-            else
-                break
-            end
-        end
-        Functions.Notify({Title = "Successfully completed the valves."})
-    end
-})
-
-Groupboxes.Floors_Completion:AddButton({
-    Text = "Auto Complete Cringle",
-    Tooltip = "Instantly completes the quest.",
-    Func = function()
-        local TouchPart = CurrentRooms:FindFirstChild("RippleExitDoor", true)
-        if TouchPart then
-            Character:PivotTo(TouchPart:GetPivot())
-        end
-    end
-})
-
 Groupboxes.Floors_Visuals = Tabs.Floors:AddLeftGroupbox("Visuals")
 Groupboxes.Floors_Visuals:AddToggle("ShowSeekPathToggle", {
 	Text = "Show Seek Path", Default = false, Tooltip = "Shows you the correct path in seek chases.",
 	Risky = Floor ~= "Mines"
 })
-Toggles.ShowSeekPathToggle:AddColorPicker("ShowSeekPathColor", { Text = "Seek Path", Default = Color3.fromRGB(0, 255, 0), Transparency = 0 })
+Toggles.ShowSeekPathToggle:AddColorPicker("ShowSeekPathColor", { Text = "Seek Path", Default = SSDoorsBlue, Transparency = 0 })
 
 local function UpdateBeamVisibility(BeamTable, ColorKey, Visible)
 	local Vis = Visible and 0 or 1
@@ -2437,7 +2308,7 @@ Groupboxes.Floors_Visuals:AddToggle("ShowEyestalkPathToggle", {
 	Text = "Show Eyestalk Path", Default = false, Tooltip = "Shows you the correct path in the eyestalk chase.",
 	Risky = Floor ~= "Garden"
 })
-Toggles.ShowEyestalkPathToggle:AddColorPicker("ShowEyestalkPathColor", { Text = "Eyestalk Path", Default = Color3.fromRGB(0, 255, 0), Transparency = 0 })
+Toggles.ShowEyestalkPathToggle:AddColorPicker("ShowEyestalkPathColor", { Text = "Eyestalk Path", Default = SSDoorsBlue, Transparency = 0 })
 Toggles.ShowEyestalkPathToggle:OnChanged(function(V) UpdateBeamVisibility(Objects.EyestalkHighlights, "ShowEyestalkPathColor", V) end)
 Options.ShowEyestalkPathColor:OnChanged(function(V)  UpdateBeamColor(Objects.EyestalkHighlights, V) end)
 
@@ -2476,99 +2347,13 @@ for ObjName, ToggleName in ObstructionNames do
 	end)
 end
 
-Groupboxes.Floors_Farming = Tabs.Floors:AddLeftGroupbox("Farming")
-Groupboxes.Floors_Farming:AddToggle("KnobFarm", {
-    Text = "Knob Farm",
-    Default = false,
-    Tooltip = "Automatically gains knobs for you, dies and revives repeatedly.",
-})
-
-Groupboxes.Floors_Farming:AddButton({
-    Text = "Start Knob Farm",
-    Tooltip = "Starts farming knobs, click this when you have enough gold.",
-    Func = function()
-		if LatestRoom.Value ~= 0 then
-			Functions.Notify({Title = "You must be in Room 0 to use this."})
-			return
-		end
-
-		if LocalPlayer.PlayerGui:FindFirstChild("TopbarUI") then 
-			local GoldCount = LocalPlayer.PlayerGui.TopbarUI.Topbar.StatsTopbarHandler.StatModules.Gold.GoldVal
-			if GoldCount.Value <= 0 then
-				Functions.Notify({Title = "You must have gold to do this."})
-				return
-			end
-		end
-
-        Globals.KnobFarmStarted = true
-    end
-})
-
-Groupboxes.Floors_Farming:AddDivider()
-Groupboxes.Floors_Farming:AddButton({
-	Text = "Start Death Farm",
-	DoubleClick = true,
-	Tooltip = "Automatically farms deaths, joining new runs.",
-	Func = function()
-		loadstring(game:HttpGet("https://raw.githubusercontent.com/bocaj111004/Abysall/refs/heads/main/Scripts/DeathFarm.luau"))()
-	end,
-
-	Disabled = not Functions.CheckCompatability({"fireproximityprompt", "firesignal"}),
-	DisabledTooltip = Globals.ImcompatibleMessage
-})
-Groupboxes.Floors_Farming:AddButton({
-	Text = "Copy Death Farm Loadstring",
-	DoubleClick = false,
-	Tooltip = "Copies the death farm loadstring to your clipboard.",
-	Func = function()
-		toclipboard([==[
-			loadstring(game:HttpGet("https://raw.githubusercontent.com/bocaj111004/Abysall/refs/heads/main/Scripts/DeathFarm.luau"))()
-		]==])
-		Library:Notify("Loadstring has been copied to your clipboard.")
-	end,
-
-	Disabled = not Functions.CheckCompatability({"fireproximityprompt", "firesignal"}),
-	DisabledTooltip = Globals.ImcompatibleMessage
-})
-
-Toggles.KnobFarm:OnChanged(function(Value)
-    if Value then
-        Functions.Notify({Title = "Please collect some gold to earn knobs.", Body = "Click 'Start Knob Farm' when you're ready."})
-	else
-		Globals.KnobFarmStarted = false
-    end
-end)
-
-Globals.KnobFarmActive = false
-Globals.KnobFarmStarted = false
-Connections.KnobFarm = Services.RunService.Heartbeat:Connect(function()
-	if Toggles.KnobFarm.Value and Globals.KnobFarmStarted then
-		if not Globals.KnobFarmActive then
-			Globals.KnobFarmActive = true
-			if Functions.CheckCompatability({"replicatesignal"}) then
-				Abysall.Environment.replicatesignal(LocalPlayer.Kill)
-			else
-				RemotesFolder.Underwater:FireServer(true)
-			end
-			while task.wait() do
-				if LocalPlayer:GetAttribute("Alive") then
-					break
-				end
-			end
-			RemotesFolder.Statistics:FireServer()
-			task.wait(0.25)
-			Globals.KnobFarmActive = false
-		end
-	end
-end)
-
 local MainHook
 local OtherHook
 if Functions.CheckCompatability({"hookmetamethod", "newcclosure", "getnamecallmethod"}) then
-	MainHook = Abysall.Environment.hookmetamethod(game, "__namecall", Abysall.Environment.newcclosure(function(Self, ...)
+	MainHook = ssdoors.Environment.hookmetamethod(game, "__namecall", ssdoors.Environment.newcclosure(function(Self, ...)
 		local Args = { ... }
-		if Abysall and Abysall.Environment then
-			local Method = Abysall.Environment.getnamecallmethod()
+		if ssdoors and ssdoors.Environment then
+			local Method = ssdoors.Environment.getnamecallmethod()
 
 			if Self.Name == "Crouch" and Method == "FireServer" then
 				if Toggles.CrouchSpoof.Value or Toggles.PositionSpoof.Value then
@@ -2595,7 +2380,7 @@ if Functions.CheckCompatability({"hookmetamethod", "newcclosure", "getnamecallme
 		return MainHook(Self, table.unpack(Args))
 	end))
 
-    OtherHook = Abysall.Environment.hookmetamethod(game, "__index", Abysall.Environment.newcclosure(function(Self, Property)
+    OtherHook = ssdoors.Environment.hookmetamethod(game, "__index", ssdoors.Environment.newcclosure(function(Self, Property)
         local Real = OtherHook(Self, Property)
 
         if Property == "MoveDirection" and Self == Humanoid and Globals.RoomsAutoWalkActive and Toggles.RoomsAutoWalkSpoofFootsteps.Value and Floor == "Rooms" and not Character:GetAttribute("Hiding") then
@@ -2687,7 +2472,7 @@ Functions.HandleCharacter = function(NewCharacter)
 	if Toggles.EnableCharacterSlide.Value then Character:SetAttribute("CanSlide", true) end
 
 	if Functions.CheckCompatability({"require"}) then
-		Main_Game = Abysall.Environment.require(Globals.MainUI.Initiator.Main_Game)
+		Main_Game = ssdoors.Environment.require(Globals.MainUI.Initiator.Main_Game)
 	end
 
 	if Main_Game and Toggles.RemoveCameraBobbing.Value then
@@ -3029,7 +2814,7 @@ Functions.HandleCharacter = function(NewCharacter)
 		end
 
 		if Globals.SelfKilled and Globals.MainUI:FindFirstChild("Statistics") then
-			Globals.MainUI.Statistics.Death.Text = "Died to Abysall Hub"
+			Globals.MainUI.Statistics.Death.Text = "Died to ssdoors Hub"
 		end
 
 		local MainFrame = Globals.MainUI:FindFirstChild("MainFrame")
@@ -3328,7 +3113,7 @@ Functions.HandleObject = function(Object)
 	elseif Name == "WaterPump" then
 		if Toggles.ObjectiveESPToggle.Value then Functions.AddESP({ Object = Object:WaitForChild("Wheel"), Text = "Water Pump", Color = Options.ObjectiveESPColor.Value }, true) end
 		Object:WaitForChild("Wheel").Sound.Played:Once(function()
-			Object:SetAttribute("Abysall_Completed", true)
+			Object:SetAttribute("ssdoors_Completed", true)
 
 			Functions.RemoveESP(Object.Wheel)
 			Functions.BlacklistESP(Object.Wheel)
@@ -3520,7 +3305,7 @@ Functions.HandleObject = function(Object)
 			if Child.Name == "PlayerBarrier" and Child.Size.Y == 2.75 and (Child.Rotation.X == 0 or Child.Rotation.X == 180) then
 				local NewBridge = Child:Clone()
 				NewBridge.CFrame = NewBridge.CFrame * CFrame.new(0, 0, -5)
-				NewBridge.Name = Abysall.ESPLibrary:GenerateRandomString()
+				NewBridge.Name = ssdoors.ESPLibrary:GenerateRandomString()
 				NewBridge.Size = Vector3.new(NewBridge.Size.X, NewBridge.Size.Y, 11)
 				NewBridge.Parent = Object
 				NewBridge.CanCollide = Toggles.BypassSeekObstructions.Value
@@ -3642,7 +3427,7 @@ Functions.HandleObject = function(Object)
 		if Toggles.ItemESPToggle.Value then Functions.AddESP({ Object = Object, Text = ItemNames[Name], Color = Options.ItemESPColor.Value }, Object:GetAttribute("ParentRoom") ~= nil) end
 		if Name == "LotusHolder" or Name == "LotusPetalPickup" then
 			Object.Handle:GetPropertyChangedSignal("LocalTransparencyModifier"):Connect(function()
-				Abysall.ESPLibrary:RemoveESP(Object)
+				ssdoors.ESPLibrary:RemoveESP(Object)
 				Functions.BlacklistESP(Object)
 			end)
 		end
@@ -3692,9 +3477,9 @@ Functions.HandleObject = function(Object)
 				while Object:IsDescendantOf(game) do
 					for _, Part in Object:GetChildren() do
 						if Part:IsA("BasePart") then
-							Abysall.Environment.firetouchinterest(RootPart, Part, 0)
+							ssdoors.Environment.firetouchinterest(RootPart, Part, 0)
 							task.wait()
-							Abysall.Environment.firetouchinterest(RootPart, Part, 1)
+							ssdoors.Environment.firetouchinterest(RootPart, Part, 1)
 						end
 					end
 					task.wait()
@@ -3806,7 +3591,7 @@ Functions.HandleObject = function(Object)
 				for _, Part in Object:GetDescendants() do
 					if Part:IsA("BasePart") then
 						task.spawn(function()
-							if Abysall.Environment.isnetworkowner(Part) then
+							if ssdoors.Environment.isnetworkowner(Part) then
 								Part.Position = Vector3.new(-49999, -49999, -49999)
 							end
 						end)
@@ -3818,7 +3603,7 @@ Functions.HandleObject = function(Object)
 					if Part:IsA("BasePart") then
 						Part.CanCollide = false
 						task.spawn(function()
-							while Abysall.Environment.isnetworkowner(Part) do
+							while ssdoors.Environment.isnetworkowner(Part) do
 								Part.Position = Vector3.new(math.random(-29999,29999), math.random(-29999,29999), math.random(-29999,29999))
 								task.wait()
 							end
@@ -4073,8 +3858,8 @@ end)
 local PromptsToFire = {}
 local PromptCooldown = {}
 
-Functions.FirePrompt      = Abysall.Environment.fireproximityprompt
-Functions.ForceFirePrompt = Abysall.Environment.fireproximityprompt
+Functions.FirePrompt      = ssdoors.Environment.fireproximityprompt
+Functions.ForceFirePrompt = ssdoors.Environment.fireproximityprompt
 
 if not Functions.FirePrompt then
 	Functions.FirePrompt = function(Prompt)
@@ -4576,7 +4361,7 @@ Library:OnUnload(function()
 
 	CollisionClone:Destroy()
 	CollisionPartClone:Destroy()
-	Abysall.ESPLibrary:Unload()
+	ssdoors.ESPLibrary:Unload()
 
 	if Main_Game then
 		Main_Game.fovtarget   = 70
@@ -4589,9 +4374,6 @@ Library:OnUnload(function()
 		Controls.GetMoveVector = Globals.OriginalGetMoveVector
 	end
 
-	getgenv().Abysall = nil
+	getgenv().ssdoors = nil
 end)
 
-while not Globals.MainUI do task.wait() end
-Abysall.Interface.ApplySettingsTab(Window)
-Functions.Notify({ Title = "Successfully loaded in " .. math.floor((tick() - LoadStart) * 1000) / 1000 .. " seconds." , Body = "Press '" .. tostring(Options.MenuKeybind.Value) .. "' to toggle the UI."})
